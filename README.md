@@ -27,7 +27,7 @@ movie_booking_system/
 ├── datastructures/
 │   ├── linkedlist.py
 │   ├── hashtable.py
-│   └── seat_matrix.py
+│   └── seat_matrix_(2D_array).py
 │
 ├── services/
 │   ├── auth_service.py
@@ -36,10 +36,8 @@ movie_booking_system/
 │   ├── admin_service.py
 │   └── statistic_service.py
 │
-├── utils/
-│   ├── csv_handler.py
-│   ├── validator.py
-│   └── helper.py
-│
-└── assets/
-    └── cinema_logo.png
+└── utils/
+    ├── csv_handler.py
+    ├── validator.py
+    └── helper.py
+
