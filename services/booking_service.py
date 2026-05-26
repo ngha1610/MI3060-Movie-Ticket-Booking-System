@@ -1,54 +1,136 @@
-# services/booking_service.py
-
-from datetime import datetime
+import uuid
 
 from utils.csv_handler import CSVHandler
+
+from services.movie_service import MovieService
+
 
 TICKET_FILE="data/tickets.csv"
 
 
 class BookingService:
 
-    def book(
+    def __init__(self):
+
+        self.movie_service=(
+
+            MovieService()
+
+        )
+
+    def book_ticket(
 
         self,
+
         username,
-        movie,
-        seat,
-        price
+
+        movie_id,
+
+        seat_id,
+
+        showtime_id
 
     ):
 
+        ticket_id=(
+
+            str(
+
+                uuid.uuid4()
+
+            )[:8]
+
+        )
+
         ticket={
 
-            "username":username,
+            "ticket_id":
+            ticket_id,
 
-            "movie":movie,
+            "user_id":
+            username,
 
-            "seat":seat,
+            "movie_id":
+            movie_id,
 
-            "price":price,
+            "seat_id":
+            seat_id,
 
-            "time":str(
-                datetime.now()
-            )
+            "status":
+            "paid",
+
+            "showtime_id":
+            showtime_id
 
         }
 
-        CSVHandler.append_csv(
+        CSVHandler.append(
 
             TICKET_FILE,
 
             ticket,
 
             [
-                "username",
-                "movie",
-                "seat",
-                "price",
-                "time"
+
+                "ticket_id",
+
+                "user_id",
+
+                "movie_id",
+
+                "seat_id",
+
+                "status",
+
+                "showtime_id"
+
             ]
 
         )
 
+        self.movie_service.update_revenue(
+
+            movie_id,
+
+            90000
+
+        )
+
         return True
+
+    def history(
+
+        self,
+
+        username
+
+    ):
+
+        tickets=(
+
+            CSVHandler.load(
+
+                TICKET_FILE
+
+            )
+        )
+
+        result=[]
+
+        for ticket in tickets:
+
+            if (
+
+                ticket["user_id"]
+
+                == username
+
+            ):
+
+                result.append(
+
+                    ticket
+
+                )
+
+        return result
