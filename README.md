@@ -27,7 +27,7 @@ movie_booking_system/
 ├── datastructures/
 │   ├── linkedlist.py
 │   ├── hashtable.py
-│   └── seat_matrix_(2D_array).py
+│   └── seat_matrix.py
 │
 ├── services/
 │   ├── auth_service.py
