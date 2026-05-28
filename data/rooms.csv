@@ -1,1 +1,7 @@
-
+room_id,room_name,rows,cols,capacity
+R01,Cinema 1,10,12,120
+R02,Cinema 2,10,12,120
+R03,Cinema 3,10,12,120
+R04,Cinema 4,10,12,120
+R05,Cinema 5,10,12,120
+R06,Starium,15,20,300
