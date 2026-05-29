@@ -1,1 +1,61 @@
-movie_id,title,genre,duration,description,base_price,poster_path
+movie_id,title,genre,duration,description,base_price,poster_path,revenue
+M001,Avatar: Fire and Ash,Khoa học viễn tưởng / Hành động,190,Mô tả phim Avatar: Fire and Ash,95000,,92841500
+M002,Lật Mặt 8: Vòng Xoáy,Hành động / Tâm lý,120,Mô tả phim Lật Mặt 8: Vòng Xoáy,95000,,97192000
+M003,Kẻ Ăn Hồn 2,Kinh dị / Cổ trang,115,Mô tả phim Kẻ Ăn Hồn 2,95000,,107794500
+M004,Sonic the Hedgehog 3,Hoạt hình / Hài hước,105,Mô tả phim Sonic the Hedgehog 3,95000,,14963500
+M005,Chị Chị Em Em 3,Tâm lý / Giật gân,110,Mô tả phim Chị Chị Em Em 3,95000,,13249000
+M006,Kraven the Hunter,Hành động / Siêu anh hùng,125,Mô tả phim Kraven the Hunter,95000,,14693000
+M007,Quỷ Cẩu 2,Kinh dị / Tâm linh,105,Mô tả phim Quỷ Cẩu 2,95000,,96689500
+M008,Mufasa: The Lion King,Hoạt hình / Phiêu lưu,118,Mô tả phim Mufasa: The Lion King,95000,,89915500
+M009,Chuyến Tàu Tử Thần,Kinh dị / Sinh tồn,110,Mô tả phim Chuyến Tàu Tử Thần,95000,,12080000
+M010,Cô Dâu Hào Môn 2,Hài hước / Tâm lý,115,Mô tả phim Cô Dâu Hào Môn 2,95000,,16136000
+M011,Nhà Bà Nữ 2: Kế Nghiệp,Gia đình / Hài hước,125,Mô tả phim Nhà Bà Nữ 2: Kế Nghiệp,95000,,102969000
+M012,Cua Lại Vợ Bầu 2,Tình cảm / Hài hước,115,Mô tả phim Cua Lại Vợ Bầu 2,95000,,99678500
+M013,Captain America: Brave New World,Hành động / Siêu anh hùng,135,Mô tả phim Captain America: Brave New World,95000,,101299500
+M014,Nụ Hôn Âm Phủ,Kinh dị / Tình cảm,100,Mô tả phim Nụ Hôn Âm Phủ,95000,,16143500
+M015,Tấm Cám: Chuyện Chưa Kể 2,Cổ trang / Thần thoại,120,Mô tả phim Tấm Cám: Chuyện Chưa Kể 2,95000,,14190500
+M016,Mai: Ngoại Truyện,Tâm lý / Tình cảm,130,Mô tả phim Mai: Ngoại Truyện,95000,,93634000
+M017,Paddington in Peru,Gia đình / Hài hước,105,Mô tả phim Paddington in Peru,95000,,11913000
+M018,The Conjuring: Last Rites,Kinh dị / Siêu nhiên,118,Mô tả phim The Conjuring: Last Rites,95000,,97317000
+M019,Trạng Tí 2,Hoạt hình / Cuộc phiêu lưu,100,Mô tả phim Trạng Tí 2,95000,,17242500
+M020,Lỡ Hẹn Với Ngày Xanh,Tình cảm / Lãng mạn,110,Mô tả phim Lỡ Hẹn Với Ngày Xanh,95000,,14230000
+M021,Quật Mộ Trùng Ma 2 (Exhuma 2),Kinh dị / Bí ẩn,135,Mô tả phim Quật Mộ Trùng Ma 2 (Exhuma 2),95000,,93029000
+M022,Mickey 17,Khoa học viễn tưởng / Tâm lý,130,Mô tả phim Mickey 17,95000,,89071000
+M023,Ma Da: Hồi Sinh,Kinh dị / Văn hóa,110,Mô tả phim Ma Da: Hồi Sinh,95000,,96641500
+M024,Thám Tử Lừng Danh Conan: Movie 28,Hoạt hình / Trinh thám,110,Mô tả phim Thám Tử Lừng Danh Conan: Movie 28,95000,,91123000
+M025,Đất Rừng Phương Nam: Khởi Nghĩa,Lịch sử / Tâm lý,135,Mô tả phim Đất Rừng Phương Nam: Khởi Nghĩa,95000,,95788000
+M026,Án Mạng Trên Sông Hương,Trinh thám / Giật gân,115,Mô tả phim Án Mạng Trên Sông Hương,95000,,14384500
+M027,The Batman Part II,Hành động / Tội phạm,160,Mô tả phim The Batman Part II,95000,,94063500
+M028,Kính Vạn Hoa: Bản Điện Ảnh,Gia đình / Phiêu lưu,110,Mô tả phim Kính Vạn Hoa: Bản Điện Ảnh,95000,,106113500
+M029,Rừng Thế Mạng 2,Sinh tồn / Giật gân,100,Mô tả phim Rừng Thế Mạng 2,95000,,14156500
+M030,Snow White,Nhạc kịch / Thần thoại,120,Mô tả phim Snow White,95000,,17611000
+M031,Fast X: Part 2,Hành động / Đua xe,145,Mô tả phim Fast X: Part 2,95000,,98379500
+M032,Thanh Gươm Diệt Quỷ: Pháo Đài Vô Cực,Hoạt hình / Hành động,120,Mô tả phim Thanh Gươm Diệt Quỷ: Pháo Đài Vô Cực,95000,,97101500
+M033,Vây Hãm: Trừng Phạt,Hành động / Tội phạm,110,Mô tả phim Vây Hãm: Trừng Phạt,95000,,100139000
+M034,Cám: Ký Ức Đẫm Máu,Kinh dị / Tâm lý,115,Mô tả phim Cám: Ký Ức Đẫm Máu,95000,,98078000
+M035,Five Nights at Freddy's 2,Kinh dị / Giật gân,110,Mô tả phim Five Nights at Freddy's 2,95000,,90728500
+M036,Hồn Papa Da Con Gái 2,Hài hước / Gia đình,105,Mô tả phim Hồn Papa Da Con Gái 2,95000,,14865500
+M037,The Super Mario Bros. Movie 2,Hoạt hình / Trẻ em,100,Mô tả phim The Super Mario Bros. Movie 2,95000,,100065500
+M038,Bạch Xuyên: Ám Ảnh,Tâm lý / Kinh dị,110,Mô tả phim Bạch Xuyên: Ám Ảnh,95000,,13619000
+M039,Mật Vụ Bí Ẩn,Hành động / Điệp viên,130,Mô tả phim Mật Vụ Bí Ẩn,95000,,11207000
+M040,Minecraft: The Movie,Phiêu lưu / Hài hước,105,Mô tả phim Minecraft: The Movie,95000,,104972000
+M041,Spider-Man: Beyond the Spider-Verse,Hoạt hình / Siêu anh hùng,140,Mô tả phim Spider-Man: Beyond the Spider-Verse,95000,,98970500
+M042,Đồ Đáng Yêu: Phương Anh,Hành động / Võ thuật,125,Mô tả phim Đồ Đáng Yêu: Phương Anh,95000,,86218000
+M043,Doraemon: Nobita và Thế Giới Ngầm,Hoạt hình / Phiêu lưu,105,Mô tả phim Doraemon: Nobita và Thế Giới Ngầm,95000,,95374000
+M044,Tiệc Trăng Máu 2,Tâm lý / Hài đen,110,Mô tả phim Tiệc Trăng Máu 2,95000,,98767500
+M045,Scream 7,Kinh dị / Giật gân,115,Mô tả phim Scream 7,95000,,14152500
+M046,Superman: Legacy,Hành động / Siêu anh hùng,145,Mô tả phim Superman: Legacy,95000,,102294500
+M047,Đảo Độc Đắc 2,Kinh dị / Sinh tồn,100,Mô tả phim Đảo Độc Đắc 2,95000,,12361500
+M048,Kẻ Kiến Tạo 2 (The Creator 2),Khoa học viễn tưởng,135,Mô tả phim Kẻ Kiến Tạo 2 (The Creator 2),95000,,13821500
+M049,Bố Già: Ngoại Truyện,Gia đình / Tâm lý,125,Mô tả phim Bố Già: Ngoại Truyện,95000,,100584000
+M050,Dune: Messiah,Khoa học viễn tưởng / Phiêu lưu,165,Mô tả phim Dune: Messiah,95000,,97568000
+M051,Toy Story 5,Hoạt hình / Gia đình,100,Mô tả phim Toy Story 5,95000,,99260500
+M052,28 Years Later,Kinh dị / Hậu tận thế,115,Mô tả phim 28 Years Later,95000,,13039500
+M053,Người Mắt Dõi Theo 2,Kinh dị / Tâm linh,100,Mô tả phim Người Mắt Dõi Theo 2,95000,,13217000
+M054,Moana 2,Hoạt hình / Nhạc kịch,105,Mô tả phim Moana 2,95000,,100069500
+M055,Chuyện Ma Gần Nhà 2,Kinh dị / Văn hóa,105,Mô tả phim Chuyện Ma Gần Nhà 2,95000,,96414000
+M056,The Fantastic Four: First Steps,Hành động / Siêu anh hùng,135,Mô tả phim The Fantastic Four: First Steps,95000,,102656500
+M057,Zootopia 2,Hoạt hình / Hài hước,105,Mô tả phim Zootopia 2,95000,,106979000
+M058,Bông Đẹp Quá Kìa,Giật gân / Sinh tồn,105,Mô tả phim Bông Đẹp Quá Kìa,95000,,15580000
+M059,Phương Anh Là Mặt Trời Nhỏ,Tình cảm / Lãng mạn,145,Mô tả phim Phương Anh Là Mặt Trời Nhỏ,95000,,104038000
+M060,Pororo,Khoa học viễn tưởng / Kinh dị,120,Mô tả phim Pororo,95000,,14507500
