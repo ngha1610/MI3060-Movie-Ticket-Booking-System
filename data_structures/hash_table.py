@@ -141,43 +141,6 @@ class UserHashTable:
             current = current.get_next()
 
         return False
-
-    def display(self):
-
-        print("\n========== USER HASH TABLE ==========")
-
-        for i in range(self._SIZE):
-
-            print(f"Bucket {i}: ", end="")
-
-            head = self._table[i]
-
-            if head is None:
-
-                print("Empty")
-
-            else:
-
-                current = head
-
-                while True:
-
-                    username = (
-                        current
-                        .get_data()
-                        .get_username()
-                    )
-
-                    print(f"[{username}] -> ", end="")
-
-                    current = current.get_next()
-
-                    if current == head:
-                        break
-
-                print("(loop)")
-
-        print("=====================================\n")
         
     def get_table(self):
         return self._table
