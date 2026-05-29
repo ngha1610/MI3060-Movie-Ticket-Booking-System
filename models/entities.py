@@ -275,45 +275,6 @@ class SeatMatrix:
 
             self._seats[r][c] = SeatStatus.EMPTY
 
-    def display_matrix(self) -> None:
-
-        print("\n========== SƠ ĐỒ GHẾ ==========")
-
-        print("    ", end="")
-
-        for c in range(self._cols):
-            print(f"{c + 1:3}", end="")
-
-        print()
-
-        for r in range(self._rows):
-
-            row_name = chr(65 + r)
-
-            print(f"{row_name}   ", end="")
-
-            for c in range(self._cols):
-
-                status = self._seats[r][c]
-
-                if status == SeatStatus.EMPTY:
-                    symbol = "[ ]"
-
-                elif status == SeatStatus.RESERVED:
-                    symbol = "[?]"
-
-                elif status == SeatStatus.BOOKED:
-                    symbol = "[X]"
-
-                else:
-                    symbol = "[-]"
-
-                print(symbol, end="")
-
-            print()
-
-        print("================================\n")
-        
     def get_seats(self):
         return self._seats
 
@@ -417,25 +378,3 @@ class Showtime:
                     count += 1
 
         return count
-
-    def display_showtime_info(self) -> None:
-
-        print("\n=========================================")
-
-        print(f"MÃ SUẤT CHIẾU: {self._showtime_id}")
-
-        print(f"Mã phim: {self._movie_id}")
-
-        print(f"Thời gian: {self._start_time}")
-
-        print(f"Phòng chiếu: {self._room_id}")
-
-        print(
-            f"Số ghế trống: {self.get_available_seats()}"
-        )
-
-        print("-----------------------------------------")
-
-        self._seat_matrix.display_matrix()
-
-        print("=========================================\n")
