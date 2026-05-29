@@ -92,28 +92,6 @@ class TicketLinkedList:
             current = current.get_next()
 
         return result
-
-    def traverse(self):
-
-        current = self._head
-
-        if current is None:
-
-            print("Danh sách vé trống")
-
-            return
-
-        while current is not None:
-
-            ticket = current.get_data()
-
-            print(
-                f"Ticket: {ticket.get_ticket_id()} "
-                f"| User: {ticket.get_user_id()} "
-                f"| Seat: {ticket.get_seat_id()}"
-            )
-
-            current = current.get_next()
             
     def get_head(self):
         return self._head
@@ -246,27 +224,6 @@ class MovieLinkedList:
                     swapped = True
 
                 current = current.get_next()
-
-    def traverse(self):
-
-        current = self._head
-
-        if current is None:
-
-            print("Danh sách phim trống")
-
-            return
-
-        while current is not None:
-
-            movie = current.get_data()
-
-            print(
-                f"Movie: {movie.get_title()} "
-                f"| Revenue: {movie.get_revenue()}"
-            )
-
-            current = current.get_next()
     
     def get_head(self):
         return self._head
@@ -365,28 +322,6 @@ class ShowtimeLinkedList:
             current = current.get_next()
 
         return False
-
-    def traverse(self):
-
-        current = self._head
-
-        if current is None:
-
-            print("Danh sách suất chiếu trống")
-
-            return
-
-        while current is not None:
-
-            st = current.get_data()
-
-            print(
-                f"Showtime: {st.get_showtime_id()} "
-                f"| Movie: {st.get_movie_id()} "
-                f"| Time: {st.get_start_time()}"
-            )
-
-            current = current.get_next()
     
     def get_head(self):
         return self._head
@@ -465,26 +400,5 @@ class RoomLinkedList:
 
         return False
 
-    def traverse(self):
-
-        current = self._head
-
-        if current is None:
-
-            print("Danh sách phòng trống")
-
-            return
-
-        while current is not None:
-
-            room = current.get_data()
-
-            print(
-                f"Room: {room.get_room_id()} "
-                f"| Capacity: {room.get_capacity()}"
-            )
-
-            current = current.get_next()
-            
     def get_head(self):
         return self._head
