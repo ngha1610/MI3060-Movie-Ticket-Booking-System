@@ -47,10 +47,7 @@ class FileIOHandler:
                         user
                     )
         except FileNotFoundError:
-            print(
-                f"[WARNING] "
-                f"{self.users_file} chưa tồn tại"
-            )
+            pass
 
     def save_users(self, table):
 
@@ -124,10 +121,7 @@ class FileIOHandler:
                     movie_list.add_movie(movie)
 
         except FileNotFoundError:
-            print(
-                f"[WARNING] "
-                f"{self.movies_file} chưa tồn tại"
-            )
+            pass
 
     def save_movies(self, movie_list):
 
@@ -192,10 +186,7 @@ class FileIOHandler:
                     room_list.add_room(room)
 
         except FileNotFoundError:
-            print(
-                f"[WARNING] "
-                f"{self.rooms_file} chưa tồn tại"
-            )
+            pass
 
     def save_rooms(self, room_list):
 
@@ -280,10 +271,7 @@ class FileIOHandler:
                     showtime_list.add_showtime(showtime)
 
         except FileNotFoundError:
-            print(
-                f"[WARNING] "
-                f"{self.showtimes_file} chưa tồn tại"
-            )
+            pass
 
     def save_showtimes(self, showtime_list):
 
@@ -354,10 +342,7 @@ class FileIOHandler:
                     ticket_list.add_ticket(ticket)
 
         except FileNotFoundError:
-            print(
-                f"[WARNING] "
-                f"{self.tickets_file} chưa tồn tại"
-            )
+            pass
 
     def save_tickets(self, ticket_list):
 
