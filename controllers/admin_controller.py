@@ -23,7 +23,7 @@ class AdminController:
             booking_controller
         )
 
- # =================================================
+    # =================================================
     # TÍNH DOANH THU
     # =================================================
 
@@ -48,82 +48,43 @@ class AdminController:
     # =================================================
     # ĐẾM PHIM
     # =================================================
-
     def count_movies(self):
-
-        count = 0
-
-        current = (
-            self._movie_controller
-            .get_movie_list()
-            .get_head()
-        )
-
-        while current is not None:
-
-            count += 1
-
-            current = (
-                current.get_next()
-            )
-
-        return count
+        # Đã sửa: Đếm trực tiếp trên mảng trả về
+        return len(self._movie_controller.get_movie_data())
 
     # =================================================
     # ĐẾM VÉ
     # =================================================
-
     def count_tickets(self):
+        # Đã sửa: Đếm trực tiếp trên mảng trả về
+        return len(self._booking_controller.get_ticket_data())
 
-        count = 0
-
-        current = (
-            self._booking_controller
-            .get_ticket_list()
-            .get_head()
-        )
-
-        while current is not None:
-
-            count += 1
-
-            current = (
-                current.get_next()
-            )
-
-        return count
-
- # =================================================
+    # =================================================
     # TOP PHIM DOANH THU
     # =================================================
-
-    def get_top_movies_by_revenue(self, limit=5):
-        movies = self._movie_controller.get_movie_data()
+    def get_top_movies_by_revenue(self, limit=10):
+        # Đã sửa: Gọi thuật toán sắp xếp (Bubble Sort) tự code ở tầng Data Structure
+        self._movie_controller.sort_movies_by_revenue()
         
-        # B1: Khởi tạo bảng tạm để tự động tính lại tiền dựa trên 17 nghìn vé thực tế
-        movie_revenues = {m.get_movie_id(): 0 for m in movies}
-        
-        # B2: Quét toàn bộ kho vé để cộng dồn tiền cho từng phim
-        current_ticket = self._booking_controller.get_ticket_list().get_head()
-        while current_ticket is not None:
-            ticket = current_ticket.get_data()
-            status = str(ticket.get_status()).strip().upper()
-            
-            if status in ["BOOKED", "2", "SEATSTATUS.BOOKED"]:
-                m_id = ticket.get_movie_id()
-                if m_id in movie_revenues:
-                    movie_revenues[m_id] += ticket.get_price()
-                    
-            current_ticket = current_ticket.get_next()
-            
-        # B3: Cập nhật doanh thu thực tế vào danh sách phim
-        for m in movies:
-            m._revenue = movie_revenues.get(m.get_movie_id(), 0)
-            
-        # B4: Sắp xếp từ cao xuống thấp
-        sorted_movies = sorted(movies, key=lambda movie: movie.get_revenue(), reverse=True)
+        # Sau khi mảng đã được sắp xếp, lấy dữ liệu ra
+        sorted_movies = self._movie_controller.get_movie_data()
 
+        # Trả về số lượng theo limit
         return sorted_movies[:limit]
+    # =================================================
+    # BÁN VÉ TẠI QUẦY CHO KHÁCH
+    # =================================================
+    def sell_ticket_at_counter(self, movie, showtime, row, col):
+        """
+        Gọi xuống booking_controller để tạo vé trực tiếp cho khách tại quầy.
+        Trả về ticket_id nếu thành công, False nếu thất bại.
+        """
+        return self._booking_controller.process_counter_booking(
+            movie=movie,
+            showtime=showtime,
+            row=row,
+            col=col
+        )
     
     # =================================================
     # THỐNG KÊ TỔNG QUAN
