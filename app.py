@@ -1,674 +1,706 @@
 import streamlit as st
-import datetime
-import plotly.graph_objects as go
-from models.entities import MovieData, Showtime
+import pandas as pd
+import random
+import streamlit.components.v1 as components
+
+# Import các Controllers và Models của bạn
+from models.entities import SeatStatus, MovieData
+from data_structures.file_io import FileIOHandler
 from controllers.auth_controller import AuthController
 from controllers.movie_controller import MovieController
-from controllers.showtime_controller import ShowtimeController
 from controllers.booking_controller import BookingController
-from controllers.admin_controller import AdminController
+from controllers.showtime_controller import ShowtimeController
 from controllers.room_controller import RoomController
-from data_structures.file_io import FileIOHandler
+from controllers.admin_controller import AdminController
 
-# =====================================================
-# INITIALIZATION & CONFIGURATION
-# =====================================================
+# ==========================================
+# 1. CẤU HÌNH TRANG
+# ==========================================
 st.set_page_config(
-    page_title="Sunnyx Cinema",
+    page_title="Sunnyx Cinema | Classic & Modern",
+    page_icon="🎞️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded" 
 )
 
-if "io_handler" not in st.session_state:
-    st.session_state.io_handler = FileIOHandler()
-    st.session_state.movie_ctrl = MovieController(st.session_state.io_handler)
-    st.session_state.room_ctrl = RoomController(st.session_state.io_handler)
-    st.session_state.showtime_ctrl = ShowtimeController(st.session_state.io_handler)
-    st.session_state.booking_ctrl = BookingController(st.session_state.io_handler, st.session_state.showtime_ctrl, st.session_state.movie_ctrl)
-    st.session_state.auth_ctrl = AuthController(st.session_state.io_handler)
+# ==========================================
+# 2. KHỞI TẠO TRẠNG THÁI (SESSION STATE) & CONTROLLERS
+# ==========================================
+if 'ad_closed' not in st.session_state: st.session_state.ad_closed = False
+if 'is_logged_in' not in st.session_state: st.session_state.is_logged_in = False
+if 'user_role' not in st.session_state: st.session_state.user_role = 'guest'
+if 'username' not in st.session_state: st.session_state.username = ''
+if 'user_obj' not in st.session_state: st.session_state.user_obj = None # Lưu Object người dùng thật
+if 'current_page' not in st.session_state: st.session_state.current_page = 'home'
+if 'selected_movie' not in st.session_state: st.session_state.selected_movie = ''
+if 'selected_seats' not in st.session_state: st.session_state.selected_seats = []
+if 'config_slider' not in st.session_state: st.session_state.config_slider= []
+if 'config_list' not in st.session_state: st.session_state.config_list = []
+
+# Khởi tạo Controllers một lần duy nhất lưu vào Session State
+if 'io_handler' not in st.session_state:
+    io_handler = FileIOHandler()
+    st.session_state.io_handler = io_handler
+    
+    st.session_state.auth_ctrl = AuthController(io_handler)
+    st.session_state.movie_ctrl = MovieController(io_handler)
+    st.session_state.showtime_ctrl = ShowtimeController(io_handler)
+    st.session_state.room_ctrl = RoomController(io_handler)
+    st.session_state.booking_ctrl = BookingController(io_handler, st.session_state.showtime_ctrl, st.session_state.movie_ctrl)
     st.session_state.admin_ctrl = AdminController(st.session_state.movie_ctrl, st.session_state.booking_ctrl)
 
-if "auth_view" not in st.session_state:
-    st.session_state.auth_view = None  
-if "selected_movie_id" not in st.session_state:
-    st.session_state.selected_movie_id = None
-if "selected_showtime_id" not in st.session_state:
-    st.session_state.selected_showtime_id = None
-if "current_selected_seats" not in st.session_state:
-    st.session_state.current_selected_seats = []
-if "search_keyword" not in st.session_state:
-    st.session_state.search_keyword = ""
+# Gán biến để gõ cho ngắn gọn trong file này
+auth_controller = st.session_state.auth_ctrl
+movie_controller = st.session_state.movie_ctrl
+showtime_controller = st.session_state.showtime_ctrl
+room_controller = st.session_state.room_ctrl
+booking_controller = st.session_state.booking_ctrl
+admin_controller = st.session_state.admin_ctrl
 
-# =====================================================
-# THEME INJECTION (LIGHT THEME & CGV SEATS FLAT)
-# =====================================================
-def inject_custom_css():
-    st.markdown("""
-        <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        
-        .stApp {
-            background: #F9F7F1 !important;
-            color: #2D3748 !important;
-            font-family: 'Plus Jakarta Sans', sans-serif !important;
-        }
-        
-        [style*="color:#FFFFFF"], [style*="color:#FFF"], [style*="color: #FFFFFF"], [style*="color: #FFF"],
-        [style*="color:#A0A0A5"], [style*="color:#DEE2E6"] {
-            color: #2D3748 !important; 
-        }
-        
-        #MainMenu, header, footer {visibility: hidden;}
-        .block-container {padding-top: 1rem !important; padding-bottom: 5rem !important;}
-        
-        section[data-testid="stSidebar"] {
-            background: #FFFFFF !important;
-            border-right: 1px solid #E2E8F0;
-        }
-        
-        .navbar-container {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 18px 40px; margin-bottom: 35px;
-            background: #FFFFFF;
-            border-bottom: 1px solid #E2E8F0;
-            border-radius: 0 0 24px 24px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-        }
-        .navbar-logo {
-            font-size: 28px; font-weight: 800; letter-spacing: 2px;
-            color: #E53935;
-        }
-        
-        .movie-card, .metric-card, .auth-overlay {
-            background: #FFFFFF !important;
-            border-radius: 12px;
-            border: 1px solid #E2E8F0 !important;
-            overflow: hidden; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
-        }
-        .poster-wrapper { width: 100%; height: 380px; background-size: cover; background-position: center; }
-        
-        .movie-info { 
-            padding: 20px; 
-            background: #FFFFFF; 
-            height: 180px; 
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        .movie-title { 
-            font-size: 19px; 
-            font-weight: 700; 
-            margin-bottom: 6px; 
-            color: #2D3748 !important; 
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+# ==========================================
+# 3. HÀM CHUYỂN TRANG & POPUP QUẢNG CÁO
+# ==========================================
+def navigate_to(page, movie=""):
+    st.session_state.current_page = page
+    if movie: 
+        st.session_state.selected_movie = movie
+        st.session_state.selected_seats = [] 
+    st.rerun()
 
-        .stButton > button {
-            background: #E53935 !important;
-            color: #FFFFFF !important; border: none !important;
-            padding: 10px 24px !important; border-radius: 8px !important; font-weight: 600 !important;
-        }
-        .stButton > button:hover { background: #D32F2F !important; }
-        
-        div.sec-btn > .stButton > button {
-            background: #FFFFFF !important; border: 1px solid #CBD5E0 !important; color: #4A5568 !important;
-        }
-
-        div[data-baseweb="input"], div[data-baseweb="textarea"] {
-            background-color: #FFFFFF !important;
-            border: 1px solid #CBD5E0 !important;
-            border-radius: 8px !important;
-        }
-        
-        /* GHẾ PHẲNG CGV: KHÔNG BO GÓC, NẰM SÁT NHAU */
-        div.seat-empty > .stButton > button,
-        div.seat-selected > .stButton > button,
-        div.seat-booked > .stButton > button {
-            border-radius: 0px !important;
-            margin: 0px !important;
-            padding: 0px !important;
-            height: 40px !important;
-            width: 100% !important;
-            font-size: 12px !important;
-            font-weight: 600 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            transition: none !important;
-        }
-        
-        div.seat-empty > .stButton > button {
-            background: #F7FAFC !important; 
-            color: #4A5568 !important; 
-            border: 1px solid #CBD5E0 !important;
-        }
-        div.seat-empty > .stButton > button:hover {
-            background: #E53935 !important;
-            color: #FFFFFF !important;
-            border-color: #E53935 !important;
-        }
-        div.seat-selected > .stButton > button {
-            background: #E53935 !important; 
-            color: #FFFFFF !important;
-            border: 1px solid #E53935 !important;
-        }
-        div.seat-booked > .stButton > button {
-            background: #555555 !important; 
-            color: #FFFFFF !important; 
-            border: 1px solid #555555 !important; 
-            pointer-events: none !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
-# =====================================================
-# MODULAR RENDER FUNCTIONS
-# =====================================================
-def render_navbar():
-    is_logged = st.session_state.auth_ctrl.is_logged_in()
-    user_label = f"Xin chào, {st.session_state.auth_ctrl.get_current_user().get_username()}" if is_logged else "Khách tham quan"
+@st.dialog("SIÊU PHẨM MÙA HÈ TẠI SUNNYX", width="large")
+def show_advertisement():
+    st.markdown("<h3 style='text-align: center; color: #73171F; margin-top:0; font-family: \"Playfair Display\", serif;'>BOM TẤN ĐÃ ĐỔ BỘ</h3>", unsafe_allow_html=True)
+    st.image("https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070", use_column_width=True)
+    st.markdown("<p style='text-align:center; color:#555; margin-top: 15px; font-style: italic;'>Mua vé liền tay, nhận ngay bắp nước miễn phí!</p>", unsafe_allow_html=True)
     
-    st.markdown(f"""
-        <div class="navbar-container">
-            <div class="navbar-logo">SUNNYX CINEMA</div>
-            <div style="display: flex; gap: 20px; align-items: center;">
-                <span style="color: #4A5568; font-size: 15px; font-weight: 600;">
-                    {user_label}
-                </span>
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-def render_metric_dashboard():
-    total_movies = st.session_state.admin_ctrl.count_movies()
-    total_tickets = st.session_state.admin_ctrl.count_tickets()
-    total_revenue = st.session_state.admin_ctrl.calculate_revenue()
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown(f'<div class="metric-card" style="padding:20px; text-align:center;"><div style="font-size:32px; font-weight:700; color:#E53935;">{total_movies}</div><div style="color:#718096; font-size:12px; font-weight:600;">TỔNG PHIM HỆ THỐNG</div></div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown(f'<div class="metric-card" style="padding:20px; text-align:center;"><div style="font-size:32px; font-weight:700; color:#E53935;">{total_tickets}</div><div style="color:#718096; font-size:12px; font-weight:600;">VÉ ĐÃ BÁN RA</div></div>', unsafe_allow_html=True)
-    with col3:
-        st.markdown(f'<div class="metric-card" style="padding:20px; text-align:center;"><div style="font-size:32px; font-weight:700; color:#E53935;">{total_revenue:,.0f} VNĐ</div><div style="color:#718096; font-size:12px; font-weight:600;">DOANH THU TÍCH LŨY</div></div>', unsafe_allow_html=True)
-
-def render_homepage():
-    st.markdown("<h3 style='font-weight:700; color:#2D3748;'>PHIM ĐANG CHIẾU TẠI RẠP</h3>", unsafe_allow_html=True)
-    
-    col_search, col_filter = st.columns([2, 1])
-    with col_search:
-        st.session_state.search_keyword = st.text_input("Tìm kiếm phim", placeholder="Nhập tên bộ phim bạn muốn tìm...", label_visibility="collapsed")
-    with col_filter:
-        genre_filter = st.selectbox("Thể loại", ["Tất cả thể loại", "Hành động", "Kinh dị", "Tình cảm", "Hoạt hình"], label_visibility="collapsed")
-
-    movies = st.session_state.movie_ctrl.get_movie_data()
-    if st.session_state.search_keyword:
-        movies = [m for m in movies if st.session_state.search_keyword.lower() in m.get_title().lower()]
-    if genre_filter != "Tất cả thể loại":
-        movies = [m for m in movies if genre_filter.lower() in m.get_genre().lower()]
-
-    if not movies:
-        st.info("Không tìm thấy bộ phim nào phù hợp.")
-    else:
-        cols_per_row = 4
-        for i in range(0, len(movies), cols_per_row):
-            chunk = movies[i:i+cols_per_row]
-            columns = st.columns(cols_per_row)
-            for idx, movie in enumerate(chunk):
-                with columns[idx]:
-                    poster = movie.get_poster_path() if movie.get_poster_path() else "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=600"
-                    
-                    st.markdown(f"""
-                        <div class="movie-card">
-                            <div class="poster-wrapper" style="background-image: url('{poster}');"></div>
-                            <div class="movie-info">
-                                <div>
-                                    <div class="movie-title">{movie.get_title()}</div>
-                                    <div style="font-size: 13px; color: #718096; margin-bottom: 8px;">{movie.get_genre()} | {movie.get_duration()} phút</div>
-                                </div>
-                                <div style="font-size: 16px; color: #E53935; font-weight: 700;">{movie.get_base_price():,.0f} VNĐ</div>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button("Đặt Vé Ngay", key=f"book_home_{movie.get_movie_id()}", use_container_width=True):
-                        if not st.session_state.auth_ctrl.is_logged_in():
-                            st.warning("Bạn cần đăng nhập tài khoản để đặt vé.")
-                        else:
-                            st.session_state.selected_movie_id = movie.get_movie_id()
-                            st.session_state.selected_showtime_id = None
-                            st.rerun()
-
-def render_seat_layout(showtime, movie):
-    matrix = showtime.get_seat_matrix()
-    
-    st.markdown("<h3 style='text-align:center; color:#2D3748; margin-top: 10px;'>SƠ ĐỒ PHÒNG CHIẾU CGV</h3>", unsafe_allow_html=True)
-    
-    st.markdown("""
-        <div style="max-width: 60%; margin: 10px auto 25px auto; text-align: center;">
-            <div style="height: 5px; background: #E53935; border-radius: 2px; margin-bottom: 6px;"></div>
-            <div style="font-size: 11px; color: #718096; font-weight:700; letter-spacing: 3px;">MÀN HÌNH CHÍNH</div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-        <div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 25px; font-size:13px; font-weight:600; color:#4A5568;">
-            <div style="display:flex; align-items:center;"><div style="width:16px; height:16px; background:#F7FAFC; border:1px solid #CBD5E0; margin-right:8px;"></div>Ghế trống</div>
-            <div style="display:flex; align-items:center;"><div style="width:16px; height:16px; background:#E53935; margin-right:8px;"></div>Đang chọn</div>
-            <div style="display:flex; align-items:center;"><div style="width:16px; height:16px; background:#555555; margin-right:8px;"></div>Đã bán (X)</div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    num_rows = matrix._rows
-    num_cols = matrix._cols
-    
-    # CĂN CHỈNH RA GIỮA TOÀN BỘ SƠ ĐỒ GHẾ
-    _, seat_center_block, _ = st.columns([1, 4, 1])
-    
-    with seat_center_block:
-        for r in range(num_rows):
-            row_label = chr(65 + r)
-            # Dùng gap="none" để các nút ghế dính sát liền nhau phẳng lỳ
-            cols = st.columns([1] + [2] * num_cols, gap="none")
-            
-            with cols[0]:
-                st.markdown(f"<p style='text-align:center; line-height:40px; margin:0; color:#4A5568; font-weight:bold;'>{row_label}</p>", unsafe_allow_html=True)
-            
-            for c in range(num_cols):
-                seat_id = f"{row_label}{c+1}"
-                is_available = st.session_state.showtime_ctrl.check_seat_status(showtime.get_showtime_id(), r, c)
-                
-                if not is_available:
-                    seat_class = "seat-booked"
-                    btn_label = "X"
-                elif seat_id in st.session_state.current_selected_seats:
-                    seat_class = "seat-selected"
-                    btn_label = seat_id
-                else:
-                    seat_class = "seat-empty"
-                    btn_label = seat_id
-                    
-                with cols[c+1]:
-                    st.markdown(f'<div class="{seat_class}">', unsafe_allow_html=True)
-                    if st.button(btn_label, key=f"seat_matrix_{r}_{c}", use_container_width=True):
-                        if is_available:
-                            if seat_id in st.session_state.current_selected_seats:
-                                st.session_state.current_selected_seats.remove(seat_id)
-                            else:
-                                st.session_state.current_selected_seats.append(seat_id)
-                            st.rerun()
-                    st.markdown('</div>', unsafe_allow_html=True)
-
-# =====================================================
-# CORE APPLICATION ROUTING
-# =====================================================
-inject_custom_css()
-render_navbar()
-
-is_logged_in = st.session_state.auth_ctrl.is_logged_in()
-is_admin = st.session_state.auth_ctrl.is_admin()
-
-with st.sidebar:
-    st.markdown("<h3 style='text-align: center; color: #E53935; font-weight:800;'>SUNNYX DASH</h3>", unsafe_allow_html=True)
-    st.markdown("<hr style='border-color: #E2E8F0;'>", unsafe_allow_html=True)
-    
-    if not is_logged_in:
-        menu_option = st.radio("MENU", ["Trang chủ hệ thống", "Đăng ký tài khoản", "Đăng nhập"], label_visibility="collapsed")
-        if menu_option == "Đăng nhập":
-            st.session_state.auth_view = "login"
-        elif menu_option == "Đăng ký tài khoản":
-            st.session_state.auth_view = "register"
-        else:
-            st.session_state.auth_view = None
-    else:
-        if is_admin:
-            st.markdown("<p style='font-size:12px; color:#718096; font-weight:700;'>QUẢN TRỊ VIÊN</p>", unsafe_allow_html=True)
-            menu_option = st.radio("ADMIN", ["Báo cáo tổng quan", "Cập nhật danh mục phim", "Điều phối suất chiếu"], label_visibility="collapsed")
-        else:
-            st.markdown("<p style='font-size:12px; color:#718096; font-weight:700;'>KHÁCH HÀNG</p>", unsafe_allow_html=True)
-            menu_option = st.radio("CUSTOMER", ["Lịch chiếu phim", "Lịch sử mua vé"], label_visibility="collapsed")
-        
-        st.markdown("<br><hr style='border-color:#E2E8F0;'>", unsafe_allow_html=True)
-        if st.button("Đăng xuất", use_container_width=True):
-            st.session_state.auth_ctrl.logout()
-            st.session_state.auth_view = None
-            st.session_state.selected_movie_id = None
-            st.session_state.selected_showtime_id = None
+        if st.button("✖ ĐÓNG QUẢNG CÁO", type="primary", use_container_width=True):
+            st.session_state.ad_closed = True
             st.rerun()
 
-# =====================================================
-# 1. GIAO DIỆN XÁC THỰC
-# =====================================================
-if not is_logged_in and st.session_state.auth_view in ["login", "register"]:
-    _, auth_center, _ = st.columns([1, 1, 1])
-    with auth_center:
-        if st.session_state.auth_view == "login":
-            st.markdown('<div class="auth-overlay" style="padding: 40px;">', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:22px; font-weight:700; text-align:center; color:#2D3748; margin-bottom:20px;">ĐĂNG NHẬP</div>', unsafe_allow_html=True)
-            username = st.text_input("Tài khoản", key="auth_login_user")
-            password = st.text_input("Mật khẩu", type="password", key="auth_login_pass")
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("Xác nhận", use_container_width=True):
-                role = st.session_state.auth_ctrl.login(username, password)
-                if role != "FAILED":
-                    st.success("Đăng nhập thành công!")
-                    st.session_state.auth_view = None
-                    st.rerun()
-                else:
-                    st.error("Tài khoản hoặc mật khẩu không đúng.")
-            st.markdown('</div>', unsafe_allow_html=True)
+# ==========================================
+# 4. CSS DÀNH CHO GIAO DIỆN (VINTAGE STYLE)
+# ==========================================
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Courier+Prime:wght@400;700&display=swap');
+    html, body, [class*="css"] { font-family: 'Courier Prime', monospace; }
+    h1, h2, h3, h4, h5, h6, .marquee-text, .hero-title, .movie-title { font-family: 'Playfair Display', serif !important; }
+    .stApp { background-color: #F4EFE6; color: #3A2E2A; }
+    header { background: transparent !important; }
+    button[title="View sidebar"] { background-color: #5C161B !important; color: #D4AF37 !important; border: 2px solid #D4AF37 !important; border-radius: 5px !important; top: 15px; left: 15px; box-shadow: 2px 2px 8px rgba(0,0,0,0.3); }
+    button[title="View sidebar"] svg { fill: #D4AF37 !important; }
+    .bg-decoration { position: fixed; z-index: 0; opacity: 0.05; pointer-events: none; animation: spin 30s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .gear-1 { top: -50px; left: -50px; font-size: 250px; color: #5C161B; }
+    .gear-2 { bottom: -80px; right: -50px; font-size: 300px; color: #D4AF37; }
+    .gear-3 { top: 40%; left: -80px; font-size: 150px; color: #3A2E2A; animation: spin 20s linear infinite reverse;}
+    .vintage-marquee { background-color: #2A080A; border: 4px dotted #D4AF37; padding: 20px 30px; text-align: center; margin-bottom: 30px; box-shadow: 0 10px 20px rgba(92, 22, 27, 0.4), inset 0 0 20px rgba(0,0,0,0.8); border-radius: 8px; position: relative; z-index: 10; }
+    .marquee-text { font-size: 3rem; font-weight: 900; margin: 0; letter-spacing: 6px; color: #FFF2C8; text-shadow: 0 0 5px #D4AF37, 0 0 15px #D4AF37, 0 0 30px #E7A310; text-transform: uppercase; }
+    .marquee-sub { color: #D4AF37; font-size: 1rem; letter-spacing: 3px; border-top: 1px solid #D4AF37; padding-top: 5px; margin-top: 5px; display: inline-block;}
+    .vintage-ticket { background-color: #FDFBF7; border: 2px dashed #B89947; padding: 25px; border-radius: 12px; box-shadow: 5px 5px 15px rgba(0,0,0,0.08); position: relative; margin-bottom: 30px; z-index: 10; }
+    .vintage-ticket::before, .vintage-ticket::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); width: 30px; height: 30px; background-color: #F4EFE6; border-radius: 50%; border: 2px dashed #B89947; }
+    .vintage-ticket::before { left: -16px; border-left-color: transparent; border-top-color: transparent; border-bottom-color: transparent; transform: translateY(-50%) rotate(45deg);}
+    .vintage-ticket::after { right: -16px; border-right-color: transparent; border-top-color: transparent; border-bottom-color: transparent; transform: translateY(-50%) rotate(-45deg);}
+    .ticket-title { color: #5C161B; font-weight: 900; font-size: 1.5rem; text-transform: uppercase; text-align: center; border-bottom: 2px solid #5C161B; padding-bottom: 10px; margin-bottom: 20px;}
+    .stSelectbox > div > div { background-color: #F4EFE6 !important; border: 1px solid #B89947 !important; border-radius: 4px; color: #3A2E2A !important; font-family: 'Courier Prime', monospace;}
+    .stButton > button[kind="primary"] { background-color: #5C161B; color: #D4AF37 !important; font-family: 'Playfair Display', serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; border: 2px solid #D4AF37; transition: all 0.3s; padding: 10px 0; border-radius: 4px; box-shadow: 2px 2px 0px #D4AF37; }
+    .stButton > button[kind="primary"]:hover { background-color: #731C22; transform: translate(2px, 2px); box-shadow: 0px 0px 0px #D4AF37; }
+    .stButton > button[kind="secondary"] { background-color: #E8DCC4; color: #5C161B !important; font-family: 'Playfair Display', serif; font-weight: 700; border: 1px solid #B89947; transition: all 0.2s; border-radius: 4px; }
+    .stButton > button[kind="secondary"]:hover { background-color: #D4AF37; color: white !important;}
+    .movie-card-container > div > div > div[data-testid="stVerticalBlock"] { background: #FDFBF7 !important; padding: 0 !important; border-radius: 8px; border: 1px solid #D4AF37; box-shadow: 3px 3px 10px rgba(0,0,0,0.1); transition: transform 0.3s; height: 100%; margin-bottom: 20px; z-index: 10; position: relative; }
+    .movie-card-container > div > div > div[data-testid="stVerticalBlock"]:hover { transform: translateY(-5px); box-shadow: 5px 5px 15px rgba(92,22,27,0.3); border-color: #5C161B;}
+    .img-wrapper { width: 100%; aspect-ratio: 2 / 3; overflow: hidden; border-bottom: 2px solid #D4AF37; padding: 5px; background: #FFF;}
+    .img-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s; border-radius: 4px;}
+    .movie-card-container > div > div > div[data-testid="stVerticalBlock"]:hover .img-wrapper img { transform: scale(1.05); }
+    .content-container { padding: 15px; text-align: center; }
+    .movie-title { font-size: 1.1rem !important; font-weight: 900 !important; color: #5C161B !important; text-transform: uppercase; margin-bottom: 10px !important; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.8rem;}
+    .movie-info-text { font-size: 0.85rem; color: #555; margin: 0 0 5px 0; border-bottom: 1px dotted #CCC; padding-bottom: 5px;}
+    .seat-screen { background: #5C161B; text-align: center; color: #D4AF37; font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; padding: 10px; border-radius: 4px; margin-bottom: 30px; letter-spacing: 8px; border: 2px double #D4AF37; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
+/* --- VŨ KHÍ HỦY DIỆT: ÉP PHÔNG CHỮ NHỎ LẠI VÀ XÓA LỀ --- */
+    
+    /* Ép tất cả các nút phụ (ghế) phải mỏng dính */
+    button[kind="secondary"] {
+        padding: 0px !important;
+        min-height: 35px !important;
+    }
+    
+    /* Xuyên thủng vào lớp thẻ <p> bên trong nút */
+    button[kind="secondary"] p {
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        font-size: 0.65rem !important; /* Thu nhỏ cỡ chữ mức tối đa để vừa cột */
+        letter-spacing: -0.5px !important; /* Kéo các chữ cái sát lại nhau */
+        margin: 0 !important;
+    }   
 
-        elif st.session_state.auth_view == "register":
-            st.markdown('<div class="auth-overlay" style="padding: 40px;">', unsafe_allow_html=True)
-            st.markdown('<div style="font-size:22px; font-weight:700; text-align:center; color:#2D3748; margin-bottom:20px;">ĐĂNG KÝ</div>', unsafe_allow_html=True)
-            reg_username = st.text_input("Tên tài khoản", key="auth_reg_user")
-            reg_password = st.text_input("Mật khẩu", type="password", key="auth_reg_pass")
-            reg_confirm = st.text_input("Xác nhận mật khẩu", type="password", key="auth_reg_conf")
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("Tạo tài khoản", use_container_width=True):
-                success = st.session_state.auth_ctrl.register(reg_username, reg_password, reg_confirm)
-                if success:
-                    st.success("Đăng ký thành công! Vui lòng đăng nhập.")
-                else:
-                    st.error("Lỗi: Tài khoản đã tồn tại hoặc mật khẩu không khớp.")
-            st.markdown('</div>', unsafe_allow_html=True)
+</style>
+""", unsafe_allow_html=True)
 
-# =====================================================
-# 2. PHÂN HỆ ADMIN
-# =====================================================
-elif is_logged_in and is_admin:
-    if menu_option == "Báo cáo tổng quan":
-        st.markdown("<h2 style='color:#2D3748; font-weight:700;'>PHÂN TÍCH DOANH THU</h2>", unsafe_allow_html=True)
-        render_metric_dashboard()
+st.markdown('<div class="bg-decoration gear-1">⚙</div><div class="bg-decoration gear-2">⚙</div><div class="bg-decoration gear-3">⚙</div>', unsafe_allow_html=True)
+
+# ==========================================
+# 5. SIDEBAR: ĐĂNG NHẬP
+# ==========================================
+with st.sidebar:
+    st.markdown("<h2 style='text-align: center; color: #5C161B; font-family: \"Playfair Display\", serif;'>🗝️ PHÒNG VÉ</h2>", unsafe_allow_html=True)
+    
+    if not st.session_state.is_logged_in:
+        st.info("Vui lòng Đăng nhập")
+        tab_login, tab_register = st.tabs(["Đăng nhập", "Đăng Ký"])
         
-        st.markdown("<br><h3 style='color:#2D3748;'>Biểu đồ doanh thu phim</h3>", unsafe_allow_html=True)
-        top_movies_list = st.session_state.admin_ctrl.get_top_movies_by_revenue(limit=5)
-        
-        if top_movies_list:
-            movie_titles = []
-            movie_revenues = []
-            
-            # SỬA LỖI LOGIC: Đọc an toàn mọi kiểu dữ liệu trả về từ admin_ctrl
-            for item in top_movies_list:
-                if isinstance(item, (tuple, list)) and len(item) >= 2:
-                    movie_obj, rev = item[0], item[1]
-                    title = movie_obj.get_title() if hasattr(movie_obj, 'get_title') else str(movie_obj)
-                    movie_titles.append(title)
-                    movie_revenues.append(rev)
-                elif hasattr(item, 'get_title'):
-                    movie_titles.append(item.get_title())
-                    if hasattr(item, 'get_revenue'):
-                        movie_revenues.append(item.get_revenue())
-                    elif hasattr(item, 'revenue'):
-                        movie_revenues.append(item.revenue)
+        with tab_login:
+            with st.form("login_form"):
+                st.markdown("<small>*(Gợi ý: Tài khoản `admin` - Pass `123`)*</small>", unsafe_allow_html=True)
+                username_input = st.text_input("Tên người dùng (Username)")
+                password_input = st.text_input("Mật khẩu (Password)", type="password")
+                submitted = st.form_submit_button("XÁC NHẬN", type="primary")
+                
+                if submitted:
+                    if username_input == "" or password_input == "": 
+                        st.error("Thiếu thông tin!")
                     else:
-                        movie_revenues.append(0)
-                elif isinstance(item, dict):
-                    movie_titles.append(item.get('title', 'N/A'))
-                    movie_revenues.append(item.get('revenue', 0))
-            
-            fig = go.Figure(data=[go.Bar(x=movie_titles, y=movie_revenues, marker_color='#E53935')])
-            fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font_color='#2D3748', height=350)
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.info("Chưa có dữ liệu doanh thu.")
-
-    elif menu_option == "Cập nhật danh mục phim":
-        st.markdown("<h2 style='color:#2D3748; font-weight:700;'>QUẢN LÝ PHIM</h2>", unsafe_allow_html=True)
-        
-        _, form_center, _ = st.columns([1, 2, 1])
-        with form_center:
-            with st.expander("Thêm phim mới"):
-                with st.form("admin_add_movie"):
-                    m_title = st.text_input("Tên phim")
-                    m_genre = st.text_input("Thể loại")
-                    m_duration = st.number_input("Thời lượng (phút)", min_value=1, value=120)
-                    m_desc = st.text_area("Mô tả")
-                    m_price = st.number_input("Giá vé (VNĐ)", min_value=0.0, value=80000.0)
-                    m_poster = st.text_input("Link Poster")
-                    
-                    if st.form_submit_button("Lưu phim", use_container_width=True):
-                        new_id = st.session_state.movie_ctrl.generate_movie_id()
-                        new_movie = MovieData(
-                            movie_id=new_id, title=m_title, genre=m_genre,
-                            duration=int(m_duration), description=m_desc,
-                            base_price=m_price, poster_path=m_poster
-                        )
-                        if st.session_state.movie_ctrl.add_movie(new_movie):
-                            st.success("Thêm thành công!")
-                            st.rerun()
-                        else:
-                            st.error("Lỗi mã phim.")
-
-            with st.expander("Sửa thông tin phim"):
-                movies_list = st.session_state.movie_ctrl.get_movie_data()
-                if not movies_list:
-                    st.warning("Hệ thống chưa có phim.")
-                else:
-                    movie_dict = {m.get_title(): m for m in movies_list}
-                    selected_title = st.selectbox("Chọn phim cần sửa", list(movie_dict.keys()))
-                    sel_movie = movie_dict[selected_title]
-
-                    with st.form("admin_edit_movie"):
-                        n_title = st.text_input("Tên phim", value=sel_movie.get_title())
-                        n_genre = st.text_input("Thể loại", value=sel_movie.get_genre())
-                        n_duration = st.number_input("Thời lượng (phút)", value=int(sel_movie.get_duration()), min_value=1)
-                        n_price = st.number_input("Giá vé (VNĐ)", value=float(sel_movie.get_base_price()), min_value=0.0)
-                        n_desc = st.text_area("Mô tả", value=sel_movie.get_description())
-                        n_poster = st.text_input("Link Poster", value=sel_movie.get_poster_path())
-
-                        if st.form_submit_button("Cập nhật thông tin", use_container_width=True):
-                            # Cơ chế gán động an toàn, không đụng chạm phá vỡ logic cũ
-                            for attr, val in [('title', n_title), ('genre', n_genre), ('duration', n_duration), ('description', n_desc)]:
-                                setter_name = f"set_{attr}"
-                                if hasattr(sel_movie, setter_name):
-                                    getattr(sel_movie, setter_name)(val)
-                                else:
-                                    setattr(sel_movie, attr, val)
+                        role = auth_controller.login(username_input, password_input)
+                        if role != "FAILED":
+                            st.session_state.is_logged_in = True
+                            st.session_state.username = username_input
+                            st.session_state.user_obj = auth_controller.get_current_user() # Load User Data object
                             
-                            if hasattr(sel_movie, 'set_base_price'): sel_movie.set_base_price(n_price)
-                            elif hasattr(sel_movie, 'set_price'): sel_movie.set_price(n_price)
-                            else: sel_movie.base_price = n_price
-
-                            if hasattr(sel_movie, 'set_poster_path'): sel_movie.set_poster_path(n_poster)
-                            elif hasattr(sel_movie, 'set_poster'): sel_movie.set_poster(n_poster)
-                            else: sel_movie.poster_path = n_poster
-                            
-                            st.session_state.io_handler.save_movies(st.session_state.movie_ctrl.get_movie_data())
-                            st.success("Đã cập nhật thành công!")
-                            st.rerun()
-                            
-        st.markdown("<br><h3 style='color:#2D3748;'>Danh sách phim hiện tại</h3>", unsafe_allow_html=True)
-        for mv in st.session_state.movie_ctrl.get_movie_data():
-            col_info, col_action = st.columns([5, 1])
-            with col_info:
-                st.markdown(f"""
-                    <div style='background:#FFFFFF; border:1px solid #E2E8F0; padding:16px; border-radius:8px; margin-bottom:10px;'>
-                        <strong style='color:#2D3748;'>[{mv.get_movie_id()}] {mv.get_title()}</strong><br>
-                        <span style='font-size:13px; color:#718096;'>Thể loại: {mv.get_genre()} | Thời lượng: {mv.get_duration()} phút</span>
-                    </div>
-                """, unsafe_allow_html=True)
-            with col_action:
-                st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
-                if st.button("Xóa", key=f"admin_del_{mv.get_movie_id()}", use_container_width=True):
-                    if st.session_state.movie_ctrl.delete_movie(mv.get_movie_id(), st.session_state.showtime_ctrl):
-                        st.success("Đã xóa")
-                        st.rerun()
-                    else:
-                        st.error("Phim đang có lịch diễn.")
-
-    elif menu_option == "Điều phối suất chiếu":
-        st.markdown("<h2 style='color:#2D3748; font-weight:700;'>ĐIỀU PHỐI SUẤT CHIẾU</h2>", unsafe_allow_html=True)
-        _, form_center, _ = st.columns([1, 2, 1])
-        with form_center:
-            with st.expander("Tạo suất chiếu mới"):
-                movie_list = st.session_state.movie_ctrl.get_movie_data()
-                room_list = st.session_state.room_ctrl.get_room_data()
-                if not movie_list or not room_list:
-                    st.warning("Cần thêm phim và phòng trước.")
-                else:
-                    movie_mapping = {m.get_title(): m.get_movie_id() for m in movie_list}
-                    room_mapping = {r.get_room_name(): r.get_room_id() for r in room_list}
-                    selected_m = st.selectbox("Phim", list(movie_mapping.keys()))
-                    selected_r = st.selectbox("Phòng", list(room_mapping.keys()))
-                    date_input = st.date_input("Ngày chiếu", datetime.date.today())
-                    time_input = st.time_input("Giờ chiếu", datetime.time(19, 0))
-                    
-                    if st.button("Lưu suất chiếu", use_container_width=True):
-                        from models.entities import SeatMatrix
-                        st_id = st.session_state.showtime_ctrl.generate_showtime_id()
-                        start_str = f"{date_input} {time_input.strftime('%H:%M')}"
-                        selected_room_id = room_mapping[selected_r]
-                        room_node = st.session_state.room_ctrl.find_room(selected_room_id)
-                        room_obj = room_node.get_data()
-                        default_matrix = SeatMatrix(rows=room_obj.rows, cols=room_obj.cols)
-                        new_st = Showtime(
-                            showtime_id=st_id, movie_id=movie_mapping[selected_m],
-                            room_id=room_mapping[selected_r], start_time=start_str,
-                            seat_matrix=default_matrix
-                        )
-                        if st.session_state.showtime_ctrl.add_showtime(new_st, st.session_state.movie_ctrl):
-                            st.success("Thành công!")
-                            st.rerun()
-                        else:
-                            st.error("Phòng này đã có lịch chiếu trùng thời gian.")
-
-# =====================================================
-# 3. PHÂN HỆ KHÁCH HÀNG
-# =====================================================
-else:
-    if menu_option in ["Lịch chiếu phim", "Trang chủ hệ thống"]:
-        if st.session_state.selected_movie_id is None:
-            render_homepage()
-        elif st.session_state.selected_movie_id and st.session_state.selected_showtime_id is None:
-            movie_node = st.session_state.movie_ctrl.search_by_id(st.session_state.selected_movie_id)
-            movie = movie_node.get_data()
-            
-            st.markdown(f"<h2 style='color:#2D3748;'>Lịch chiếu: {movie.get_title()}</h2>", unsafe_allow_html=True)
-            st.markdown(f"<p style='color:#718096;'>{movie.get_description()}</p>", unsafe_allow_html=True)
-            
-            all_st = st.session_state.showtime_ctrl.get_showtime_data()
-            valid_st = [s for s in all_st if s.get_movie_id() == movie.get_movie_id()]
-            
-            if not valid_st:
-                st.info("Phim chưa được xếp suất chiếu.")
-                st.markdown('<div class="sec-btn">', unsafe_allow_html=True)
-                if st.button("Quay lại"):
-                    st.session_state.selected_movie_id = None
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-            else:
-                # TÍNH NĂNG: THANH CHỌN SUẤT CHIẾU THEO NGÀY
-                unique_dates = sorted(list(set(s.get_start_time().split()[0] for s in valid_st)))
-                selected_date = st.selectbox("Chọn ngày xem phim:", unique_dates)
-                
-                # Lọc lại danh sách suất chiếu theo ngày đã chọn
-                filtered_st = [s for s in valid_st if s.get_start_time().startswith(selected_date)]
-                
-                st.markdown("<h4 style='color:#2D3748; margin-top:20px;'>Các suất chiếu trong ngày:</h4>", unsafe_allow_html=True)
-                for showtime in filtered_st:
-                    room_node = st.session_state.room_ctrl.find_room(showtime.get_room_id())
-                    room_name = room_node.get_data().get_room_name() if room_node else showtime.get_room_id()
-                    
-                    col_st_info, col_st_action = st.columns([4, 1])
-                    with col_st_info:
-                        st.markdown(f"""
-                            <div style='background:#FFFFFF; padding:16px; border-radius:8px; border-left:4px solid #E53935; margin-bottom:12px; border:1px solid #E2E8F0;'>
-                                <span style='font-weight:600; color:#2D3748;'>Giờ chiếu: {showtime.get_start_time().split()[1]}</span> | <span style='color:#718096;'>Phòng chiếu: {room_name}</span>
-                            </div>
-                        """, unsafe_allow_html=True)
-                    with col_st_action:
-                        st.markdown("<div style='margin-top:4px;'></div>", unsafe_allow_html=True)
-                        if st.button("Chọn Suất", key=f"st_select_btn_{showtime.get_showtime_id()}", use_container_width=True):
-                            st.session_state.selected_showtime_id = showtime.get_showtime_id()
-                            st.session_state.current_selected_seats = []
-                            st.rerun()
-                            
-                st.markdown('<br><div class="sec-btn">', unsafe_allow_html=True)
-                if st.button("Quay lại"):
-                    st.session_state.selected_movie_id = None
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-
-        elif st.session_state.selected_showtime_id:
-            showtime_node = st.session_state.showtime_ctrl.find_showtime(st.session_state.selected_showtime_id)
-            showtime = showtime_node.get_data()
-            movie = st.session_state.movie_ctrl.search_by_id(st.session_state.selected_movie_id).get_data()
-            
-            render_seat_layout(showtime, movie)
-            
-            st.markdown("<br><hr style='border-color:#E2E8F0;'>", unsafe_allow_html=True)
-            total_price = len(st.session_state.current_selected_seats) * movie.get_base_price()
-            
-            # CĂN CHỈNH BẢNG THANH TOÁN RA GIỮA
-            _, bill_center, _ = st.columns([1, 2, 1])
-            with bill_center:
-                seats_str = ', '.join(st.session_state.current_selected_seats) if st.session_state.current_selected_seats else 'Chưa chọn'
-                st.markdown(f"**Ghế đã chọn:** <span style='color:#E53935; font-weight:700; font-size:16px;'>{seats_str}</span>", unsafe_allow_html=True)
-                st.markdown(f"**Tổng tiền thanh toán:** <span style='color:#2D3748; font-size:22px; font-weight:bold;'>{total_price:,.0f} VNĐ</span>", unsafe_allow_html=True)
-                st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
-                
-                if st.button("Xác nhận thanh toán vé", disabled=not st.session_state.current_selected_seats, use_container_width=True):
-                    user_obj = st.session_state.auth_ctrl.get_current_user()
-                    success_flag = True
-                    
-                    for seat_str in st.session_state.current_selected_seats:
-                        row_idx = ord(seat_str[0]) - 65
-                        col_idx = int(seat_str[1:]) - 1
-                        
-                        booked = st.session_state.booking_ctrl.process_booking(
-                            user_obj, movie, showtime, row_idx, col_idx, st.session_state.movie_ctrl
-                        )
-                        if not booked:
-                            success_flag = False
-                            
-                    if success_flag:
-                        st.success("Đặt vé rạp CGV thành công!")
-                        st.session_state.current_selected_seats = []
-                        st.session_state.selected_showtime_id = None
-                        st.session_state.selected_movie_id = None
-                        st.rerun()
-                    else:
-                        st.error("Lỗi: Ghế vừa chọn đã bị người khác đặt trước.")
-                
-                st.markdown('<div class="sec-btn" style="margin-top:15px;">', unsafe_allow_html=True)
-                if st.button("Quay lại danh sách suất chiếu", use_container_width=True):
-                    st.session_state.selected_showtime_id = None
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-
-    elif menu_option == "Lịch sử mua vé":
-        st.markdown("<h2 style='color:#2D3748; font-weight:700;'>LỊCH SỬ GIAO DỊCH VÉ</h2>", unsafe_allow_html=True)
-        user_obj = st.session_state.auth_ctrl.get_current_user()
-        history_list = st.session_state.booking_ctrl.get_booking_history(user_obj.get_user_id())
-        
-        if not history_list:
-            st.info("Tài khoản của bạn chưa thực hiện giao dịch mua vé nào.")
-        else:
-            for ticket in history_list:
-                m_node = st.session_state.movie_ctrl.search_by_id(ticket.get_movie_id())
-                m_title = m_node.get_data().get_title() if m_node else "Phim hệ thống"
-                status_color = "#E53935" if ticket.get_status() == "BOOKED" else "#A0AEC0"
-                
-                col_ticket_card, col_ticket_action = st.columns([5, 1])
-                with col_ticket_card:
-                    st.markdown(f"""
-                        <div style='background: #FFFFFF; padding: 18px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #E2E8F0; border-left: 4px solid {status_color};'>
-                            <strong style='font-size:16px; color:#2D3748;'>{m_title}</strong> | <span style='font-size:12px; color:#718096;'>Mã vé: {ticket.get_ticket_id()}</span><br>
-                            <span style='font-size:14px; color:#4A5568;'>Vị trí ghế: <strong style='color:#E53935;'>{ticket.get_seat_id()}</strong> | Chi phí: {ticket.get_price():,.0f} VNĐ</span><br>
-                            Trạng thái giao dịch: <strong style='color:{status_color};'>{ticket.get_status()}</strong>
-                        </div>
-                    """, unsafe_allow_html=True)
-                with col_ticket_action:
-                    st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
-                    if ticket.get_status() == "BOOKED":
-                        if st.button("Hủy vé", key=f"cust_cancel_{ticket.get_ticket_id()}", use_container_width=True):
-                            if st.session_state.booking_ctrl.cancel_booking(user_obj.get_user_id(), ticket.get_ticket_id()):
-                                st.success("Đã hoàn hủy thành công!")
-                                st.rerun()
+                            if role == "ADMIN":
+                                st.session_state.user_role = "admin"
+                                st.session_state.current_page = "admin_dash"
                             else:
-                                st.error("Không thể hoàn hủy vé vào lúc này.")
+                                st.session_state.user_role = "customer"
+                                st.session_state.current_page = "home"
+                            st.rerun()
+                        else:
+                            st.error("Thông tin không chính xác!")
+        with tab_register:
+            with st.form("register_form"):
+                new_username = st.text_input("Tên người dùng mới")
+                new_password = st.text_input("Mật khẩu", type="password")
+                confirm_password = st.text_input("Xác nhận mật khẩu", type="password")
+                reg_submitted = st.form_submit_button("ĐĂNG KÝ", type="primary")
+                if reg_submitted:
+                    success = auth_controller.register(new_username, new_password, confirm_password)
+                    if success:
+                        st.success("Đăng ký thành công! Sang tab Đăng Nhập để vào.")
+                    else:
+                        st.error("Lỗi đăng ký! Tên người dùng đã tồn tại hoặc mật khẩu chưa đạt.")
+    else:
+        st.success(f"Kính chào quý khách **{st.session_state.username}**.")
+        st.caption(f"Hạng: {st.session_state.user_role.upper()}")
+        if st.session_state.user_role == 'customer':
+            if st.button("🏠 Sảnh Chính", use_container_width=True): navigate_to("home")
+            if st.button("🎫 Vé Của Tôi", use_container_width=True): navigate_to("history")
+            st.divider()
+        if st.button("ĐĂNG XUẤT", use_container_width=True):
+            auth_controller.logout()
+            st.session_state.is_logged_in = False
+            st.session_state.user_role = 'guest'
+            st.session_state.username = ''
+            st.session_state.user_obj = None
+            st.session_state.current_page = 'home'
+            st.session_state.selected_seats = []
+            st.rerun()
+
+# ==========================================
+# 6. KHUNG GIAO DIỆN CHÍNH
+# ==========================================
+st.markdown("""
+<div class="vintage-marquee">
+    <div class="marquee-text">SUNNYX CINEMA</div>
+    <div class="marquee-sub">EST. 1926 • CLASSIC VINTAGE CINEMA</div>
+</div>
+""", unsafe_allow_html=True)
+
+# ------------------------------------------
+# A. GIAO DIỆN QUẢN TRỊ VIÊN
+# ------------------------------------------
+if st.session_state.user_role == 'admin':
+    st.markdown("<h2 style='color:#5C161B;'>⚙️ PHÒNG ĐIỀU HÀNH KỸ THUẬT</h2>", unsafe_allow_html=True)
+    st.info("Khu vực dành riêng cho Quản đốc rạp (Admin).")
+    
+    # Hiển thị Metric
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Tổng Doanh thu", f"{admin_controller.calculate_revenue():,.0f} đ")
+    c2.metric("Vé xuất ra", f"{admin_controller.count_tickets()} vé")
+    c3.metric("Phim trình chiếu", f"{admin_controller.count_movies()} cuộn")
+    c4.metric("Thành viên hệ thống", f"{len(auth_controller.get_all_users())} người")
+    st.divider()
+    
+    # Chia Tab cho Admin
+    tab_manage, tab_display, tab_top = st.tabs(["Quản Lý Phim", "Cấu Hình Giao Diện", "Top Doanh Thu"])
+    
+    # TAB 1: QUẢN LÝ KHO PHIM (THÊM / SỬA / XÓA)
+    with tab_manage:
+        manage_action = st.radio("Chọn thao tác:", ["Thêm Phim Mới", "Cập Nhật Phim", "Xóa Phim"], horizontal=True)
+        st.write("---")
+        
+        # Load danh sách phim hiện tại
+        all_movies = movie_controller.get_movie_data()
+        movie_dict = {m.get_title(): m for m in all_movies}
+        
+        # --- THÊM PHIM ---
+        if manage_action == "Thêm Phim Mới":
+            with st.form("add_movie_form"):
+                st.subheader("Thêm Tác Phẩm Mới")
+                new_title = st.text_input("Tên phim (*)")
+                new_genre = st.text_input("Thể loại (*)")
+                
+                col1, col2 = st.columns(2)
+                new_duration = col1.number_input("Thời lượng (phút)", min_value=1, value=120)
+                new_price = col2.number_input("Giá vé cơ bản (VNĐ)", min_value=0, value=85000, step=5000)
+                
+                new_poster = st.text_input("Link ảnh Poster (URL)")
+                new_desc = st.text_area("Mô tả tóm tắt nội dung")
+                
+                if st.form_submit_button("THÊM VÀO KHO", type="primary"):
+                    if not new_title.strip() or not new_genre.strip():
+                        st.error("Vui lòng điền đầy đủ Tên phim và Thể loại!")
+                    else:
+                        new_id = movie_controller.generate_movie_id()
+                        new_movie = MovieData(
+                            movie_id=new_id,
+                            title=new_title,
+                            genre=new_genre,
+                            duration=new_duration,
+                            description=new_desc,
+                            base_price=new_price,
+                            poster_path=new_poster
+                        )
+                        if movie_controller.add_movie(new_movie):
+                            st.success(f"Đã thêm siêu phẩm '{new_title}' thành công!")
+                            st.rerun()
+                        else:
+                            st.error("Lỗi: Phim đã tồn tại trong kho!")
+
+        # --- CẬP NHẬT PHIM ---
+        elif manage_action == "Cập Nhật Phim":
+            if not movie_dict:
+                st.warning("Kho rỗng. Chưa có phim nào để cập nhật.")
+            else:
+                selected_movie_title = st.selectbox("Chọn phim cần sửa:", list(movie_dict.keys()))
+                selected_movie = movie_dict[selected_movie_title]
+                
+                with st.form("update_movie_form"):
+                    st.subheader(f"Chỉnh sửa: {selected_movie_title}")
+                    upd_title = st.text_input("Tên phim", value=selected_movie.get_title())
+                    upd_genre = st.text_input("Thể loại", value=selected_movie.get_genre())
+                    
+                    col1, col2 = st.columns(2)
+                    upd_duration = col1.number_input("Thời lượng (phút)", min_value=1, value=selected_movie.get_duration())
+                    upd_price = col2.number_input("Giá vé (VNĐ)", min_value=0, value=int(selected_movie.get_base_price()), step=5000)
+                    
+                    upd_poster = st.text_input("Link ảnh Poster", value=selected_movie.get_poster_path())
+                    upd_desc = st.text_area("Mô tả", value=selected_movie.get_description())
+                    
+                    if st.form_submit_button("LƯU THAY ĐỔI", type="primary"):
+                        if movie_controller.update_movie(
+                            movie_id=selected_movie.get_movie_id(),
+                            title=upd_title,
+                            genre=upd_genre,
+                            duration=upd_duration,
+                            description=upd_desc,
+                            base_price=upd_price,
+                            poster_path=upd_poster
+                        ):
+                            st.success("Bản ghi đã được cập nhật thành công!")
+                            st.rerun()
+                        else:
+                            st.error("Có lỗi xảy ra khi lưu.")
+
+        # --- XÓA PHIM ---
+        elif manage_action == "Xóa Phim":
+            if not movie_dict:
+                st.warning("Kho rỗng. Không có phim để xóa.")
+            else:
+                del_movie_title = st.selectbox("Chọn phim muốn xoá:", list(movie_dict.keys()))
+                del_movie = movie_dict[del_movie_title]
+                
+                st.error(f"⚠️ Cảnh báo: Bạn sắp xóa cuộn phim **{del_movie_title}**. Thao tác này không thể hoàn tác.")
+                if st.button("XÁC NHẬN XÓA", type="primary"):
+                    if movie_controller.delete_movie(del_movie.get_movie_id(), showtime_controller):
+                        st.success(f"Đã dọn dẹp '{del_movie_title}' khỏi kho!")
+                        st.rerun()
+                    else:
+                        st.error("Không thể xóa! Phim này đang có suất chiếu hoạt động hoặc khách đã mua vé.")
+
+    # TAB: CẤU HÌNH HIỂN THỊ TRANG CHỦ
+    with tab_display:
+        st.subheader("Cấu Hình Phim Hiển Thị Ở Sảnh Chính")
+        st.info("Tùy chọn những cuộn phim nào sẽ được phô diễn ra ngoài giao diện khách hàng.")
+        
+        all_movies = movie_controller.get_movie_data()
+        all_titles = [m.get_title() for m in all_movies]
+        
+        with st.form("display_config_form"):
+            new_slider = st.multiselect("Chọn phim chạy trên Bảng Trượt (Tối đa 3):", options=all_titles, default=st.session_state.config_slider if st.session_state.config_slider else all_titles[:3])
+            new_list = st.multiselect("Chọn phim xuất hiện ở Danh sách Tác Phẩm (Tối đa 8):", options=all_titles, default=st.session_state.config_list if st.session_state.config_list else all_titles[:8])
+            
+            if st.form_submit_button("LƯU CẤU HÌNH HIỂN THỊ", type="primary"):
+                if len(new_slider) > 3:
+                    st.error("Bảng trượt chỉ chứa được tối đa 3 tác phẩm!")
+                elif len(new_list) > 8:
+                    st.error("Danh sách bên dưới chỉ chứa được tối đa 8 tác phẩm!")
+                else:
+                    st.session_state.config_slider = new_slider
+                    st.session_state.config_list = new_list
+                    st.success("Đã lưu cấu hình! Bạn có thể về Sảnh Chính để xem thay đổi.")
+    # TAB 2: TOP DOANH THU
+    with tab_top: 
+        top_movies = admin_controller.get_top_movies_by_revenue()
+        if top_movies:
+            for m in top_movies:
+                st.markdown(f"**🎞️ {m.get_title()}** | Sinh lời: <span style='color:#5C161B; font-weight:bold;'>{m.get_revenue():,.0f} đ</span>", unsafe_allow_html=True)
+                st.caption(f"Thể loại: {m.get_genre()} | Thời lượng: {m.get_duration()} phút")
+                st.divider()
+        else:
+            st.write("Chưa có dữ liệu phim.")
+
+
+
+# ------------------------------------------
+# B. GIAO DIỆN KHÁCH HÀNG - TRANG CHỦ
+# ------------------------------------------
+elif st.session_state.current_page == 'home':
+    # 1. LẤY DỮ LIỆU TỪ KHO PHIM VÀ CẤU HÌNH ADMIN
+    all_movies = movie_controller.get_movie_data()
+    
+    # Kiểm tra an toàn nếu cấu hình admin chưa được khởi tạo
+    if 'config_slider' not in st.session_state: st.session_state.config_slider = []
+    if 'config_list' not in st.session_state: st.session_state.config_list = []
+    
+    # Lọc phim theo đúng danh sách Admin đã chọn. Nếu Admin chưa chọn gì, lấy mặc định vài phim đầu tiên.
+    slider_movies = [m for m in all_movies if m.get_title() in st.session_state.config_slider]
+    if not slider_movies and all_movies: slider_movies = all_movies[:3]
+        
+    display_movies = [m for m in all_movies if m.get_title() in st.session_state.config_list]
+    if not display_movies and all_movies: display_movies = all_movies[:8]
+
+    # --- 2. TÍNH NĂNG MỚI: SLIDER ĐỘNG HOÀN TOÀN ---
+    st.markdown("<h2 style='text-align: center; color: #5C161B; margin-bottom: 20px; z-index:10; position:relative;'>— TÂM ĐIỂM TUẦN NÀY —</h2>", unsafe_allow_html=True)
+    
+    if not slider_movies:
+        st.info("Hệ thống chưa thiết lập tác phẩm Tâm Điểm.")
+    else:
+        # Tạo chuỗi HTML chứa nội dung các slide động
+        slides_html_content = ""
+        for i, m in enumerate(slider_movies):
+            active_class = "active" if i == 0 else "" # Slide đầu tiên luôn hiển thị
+            img_url = m.get_poster_path() if m.get_poster_path() else "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1000&q=80"
+            desc = m.get_description() if m.get_description() else "Siêu phẩm điện ảnh kinh điển không thể bỏ lỡ tại Sunnyx Vintage Cinema."
+            
+            slides_html_content += f"""
+            <div class="slide {active_class}">
+                <div class="poster" style="background-image: url('{img_url}');"></div>
+                <div class="content">
+                    <h1>{m.get_title()}</h1>
+                    <p>{desc}</p>
+                    <div>
+                        <span class="tag">{m.get_genre()}</span>
+                        <span class="tag">⏳ {m.get_duration()} phút</span>
+                    </div>
+                </div>
+            </div>
+            """
+
+        # Bọc CSS và JS vào chuỗi f-string (những chỗ có ngoặc nhọn {} của CSS/JS phải nhân đôi thành {{}} để không bị lỗi Python)
+        slider_html = f"""
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Courier+Prime:wght@400;700&display=swap');
+          body {{ margin: 0; background-color: transparent; font-family: 'Playfair Display', serif;}}
+          .slider-container {{ width: 100%; height: 350px; position: relative; overflow: hidden; border: 4px double #D4AF37; border-radius: 10px; background: #2A080A; box-shadow: 0 10px 20px rgba(0,0,0,0.3);}}
+          .slide {{ position: absolute; width: 100%; height: 100%; display: flex; transition: opacity 1s ease-in-out; opacity: 0; }}
+          .slide.active {{ opacity: 1; z-index: 10; }}
+          .poster {{ width: 35%; height: 100%; background-size: cover; background-position: center; border-right: 2px dashed #D4AF37; }}
+          .content {{ width: 65%; padding: 30px; color: #FFF2C8; display: flex; flex-direction: column; justify-content: center; }}
+          h1 {{ color: #D4AF37; font-size: 32px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}}
+          p {{ font-family: 'Courier Prime', monospace; font-size: 15px; line-height: 1.6; color: #E8DCC4; margin-bottom: 15px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;}}
+          .tag {{ display: inline-block; border: 1px solid #D4AF37; padding: 5px 12px; font-size: 13px; margin-right: 10px; color: #D4AF37; font-family: 'Courier Prime', monospace;}}
+          .nav-btn {{ position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #D4AF37; border: 1px solid #D4AF37; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 20px; font-weight: bold; z-index: 20; transition: 0.3s;}}
+          .nav-btn:hover {{ background: #D4AF37; color: #2A080A;}}
+          .prev {{ left: 10px; }} .next {{ right: 10px; }}
+        </style>
+
+        <div class="slider-container">
+          {slides_html_content}
+          <button class="nav-btn prev" onclick="moveSlide(-1)">&#10094;</button>
+          <button class="nav-btn next" onclick="moveSlide(1)">&#10095;</button>
+        </div>
+
+        <script>
+          let currentSlide = 0; 
+          const slides = document.querySelectorAll('.slide');
+          let slideInterval;
+
+          function showSlide(index) {{ 
+            slides.forEach(s => s.classList.remove('active')); 
+            if(index >= slides.length) currentSlide = 0; 
+            else if(index < 0) currentSlide = slides.length - 1; 
+            else currentSlide = index; 
+            slides[currentSlide].classList.add('active');
+          }}
+
+          function moveSlide(step) {{ 
+            showSlide(currentSlide + step); 
+            resetInterval();
+          }}
+          
+          function resetInterval() {{
+            clearInterval(slideInterval);
+            slideInterval = setInterval(() => moveSlide(1), 4000);
+          }}
+          resetInterval();
+        </script>
+        """
+        components.html(slider_html, height=360)
+
+    # --- 3. ĐẶT VÉ NHANH ĐỘNG ---
+    # Lấy toàn bộ tên phim để khách có thể mua bất kỳ phim nào trong kho (không chỉ những phim đang hiển thị)
+    movie_titles = [m.get_title() for m in all_movies] if all_movies else ["Hiện chưa có phim"]
+    
+    with st.container():
+        st.markdown('<div class="vintage-ticket"><div class="ticket-title">🎟️ QUẦY BÁN VÉ NHANH</div>', unsafe_allow_html=True)
+        qb1, qb2, qb3, qb4 = st.columns([2, 1, 1, 1])
+        
+        # 1. Khách hàng chọn phim
+        with qb1: 
+            selected_fast_movie = st.selectbox("Chọn Cuộn Phim", movie_titles)
+            
+        # --- BƯỚC MỚI: TÌM MÃ ID TỪ TÊN PHIM ---
+        selected_movie_id = None
+        movies_list = movie_controller.get_movie_data() # Kéo danh sách phim về
+        
+        for m in movies_list:
+            # (Lưu ý: Nếu class Movie của nhóm bạn dùng hàm get_name() thay vì get_title() thì bạn sửa lại nhé)
+            if m.get_title() == selected_fast_movie: 
+                selected_movie_id = m.get_movie_id()
+                break
+                
+        # 2. Gọi Controller để lấy lịch chiếu thô (Truyền ID vào thay vì truyền Tên)
+        movie_showtimes = showtime_controller.get_showtimes_by_movie(selected_movie_id)
+        
+        # 3. Bóc tách và "làm sạch" dữ liệu Ngày/Giờ từ start_time
+        available_dates = []
+        available_times = []
+        
+        if movie_showtimes:
+            for s in movie_showtimes:
+                # Gọi đúng tên hàm get_start_time() và chém bay mọi loại ngoặc, nháy
+                raw_data = str(s.get_start_time()).replace("[", "").replace("]", "").replace("'", "").replace('"', "")
+                
+                # Tách ra nếu có nhiều lịch bị dính chùm bằng dấu phẩy
+                show_items = [item.strip() for item in raw_data.split(",") if item.strip()]
+                
+                for item in show_items:
+                    # item lúc này sẽ có dạng "2024-05-20 09:30"
+                    if " " in item:
+                        # Cắt đôi chuỗi tại vị trí khoảng trắng đầu tiên
+                        parts = item.split(" ", 1) 
+                        available_dates.append(parts[0]) # Nửa đầu là Ngày
+                        available_times.append(parts[1]) # Nửa sau là Giờ
+                    else:
+                        # Đề phòng dữ liệu bị lỗi thiếu khoảng trắng
+                        available_dates.append(item)
+                        available_times.append(item)
+                
+            # Lọc trùng lặp và sắp xếp lại cho đẹp
+            available_dates = sorted(list(set(available_dates)))
+            available_times = sorted(list(set(available_times)))
+        else:
+            available_dates = ["Chưa có lịch chiếu"]
+            available_times = ["Chưa có khung giờ"]
+
+        # 4. Hiển thị lên giao diện
+        with qb2: 
+            st.selectbox("Ngày Chiếu", available_dates) 
+        with qb3: 
+            st.selectbox("Khung Giờ", available_times)
+        with qb4: 
+            st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
+            if st.button("XUẤT VÉ", type="primary", use_container_width=True):
+                if not st.session_state.is_logged_in:
+                    st.error("⚠️ Xuất trình thẻ thành viên (Đăng nhập)!")
+                elif selected_fast_movie == "Hiện chưa có phim":
+                    st.error("Rạp đang bảo trì phim!")
+                else:
+                    navigate_to("booking", selected_fast_movie)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- 4. RENDER CÁC CARD PHIM TRÌNH CHIẾU THEO LỰA CHỌN ADMIN ---
+    st.markdown("<h2 style='text-align: center; color: #5C161B; margin-top: 40px; margin-bottom: 30px; position:relative; z-index:10;'>— CÁC TÁC PHẨM TRÌNH CHIẾU —</h2>", unsafe_allow_html=True)
+    st.markdown('<div class="movie-card-container">', unsafe_allow_html=True)
+    
+    def create_premium_movie_card(col, title, genre, duration, price, img_url):
+        with col:
+            with st.container():
+                st.markdown(f"""
+                <div class="img-wrapper"><img src="{img_url if img_url else 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500&q=80'}"></div>
+                <div class="content-container">
+                    <p class="movie-title">{title}</p>
+                    <p class="movie-info-text"><b>Thể loại:</b> {genre}</p>
+                    <p class="movie-info-text"><b>Độ dài:</b> {duration} phút</p>
+                    <p class="movie-info-text" style="color: #D4AF37; font-weight: bold;">Lệ phí: {price:,.0f} đ</p>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(f"🎟️ MUA VÉ", key=f"btn_{title}", use_container_width=True, type="primary"):
+                    if not st.session_state.is_logged_in:
+                        st.error(f"⚠️ Vui lòng đăng nhập để đặt vé!")
+                    else:
+                        navigate_to("booking", title)
+
+    if not display_movies:
+        st.info("Hiện hệ thống chưa thiết lập phim hiển thị tại sảnh. Vui lòng liên hệ Admin.")
+    else:
+        # Load phim từ danh sách display_movies do Admin cấu hình (chia làm các hàng 4 cột)
+        cols = st.columns(4)
+        for i, movie in enumerate(display_movies):
+            col = cols[i % 4]
+            create_premium_movie_card(
+                col, 
+                movie.get_title(), 
+                movie.get_genre(), 
+                movie.get_duration(), 
+                movie.get_base_price(), 
+                movie.get_poster_path()
+            )
+            
+            # Xuống dòng sau mỗi 4 phim
+            if (i + 1) % 4 == 0 and i != (len(display_movies) - 1):
+                st.write("") 
+                cols = st.columns(4)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ------------------------------------------
+# C. GIAO DIỆN KHÁCH HÀNG - ĐẶT GHẾ (BOOKING)
+# ------------------------------------------
+elif st.session_state.current_page == 'booking':
+    if st.button("⬅TRỞ VỀ SẢNH CHÍNH", type="secondary"): navigate_to("home")
+    
+    selected_movie_title = st.session_state.selected_movie
+    st.markdown(f"<h2 style='color:#5C161B;'>🎫 XUẤT VÉ: {selected_movie_title}</h2>", unsafe_allow_html=True)
+    
+    # Tìm phim tương ứng
+    movie_node = movie_controller.search_by_title(selected_movie_title)
+    if movie_node is None:
+        st.error("Không tìm thấy dữ liệu của phim này trong kho!")
+    else:
+        m_data = movie_node.get_data()
+        
+        # Tìm lịch chiếu (Lấy lịch chiếu đầu tiên khớp với movie_id)
+        showtimes = showtime_controller.get_showtime_data()
+        st_data = next((s for s in showtimes if s.get_movie_id() == m_data.get_movie_id()), None)
+        
+        if st_data is None:
+            st.warning("⚠️ Rạp chưa mở khung giờ chiếu nào cho tác phẩm này. Vui lòng quay lại sau!")
+        else:
+            st.info(f"📍 Địa điểm: Sunnyx Vintage Cinema | 🎬 Phòng: {st_data.get_room_id()} | ⏰ Giờ chiếu: {st_data.get_start_time()}")
+            st.markdown('<div class="seat-screen">MÀN CHIẾU BẠC</div>', unsafe_allow_html=True)
+            st.write("")
+            
+            # Load ma trận ghế thực tế từ hệ thống
+            seat_matrix = st_data.get_seat_matrix()
+            rows = seat_matrix.get_rows()
+            cols = seat_matrix.get_cols()
+            
+            for r in range(rows):
+                cols_st = st.columns(cols)
+                row_char = chr(65 + r)
+                for c in range(cols):
+                    seat_name = f"{row_char}{c+1}"
+                    # Check status (0 là EMPTY theo Entities)
+                    is_booked = (seat_matrix.check_status(r, c) != SeatStatus.EMPTY)
+                    
+                    with cols_st[c]:
+                        if is_booked:
+                            st.button(seat_name, key=f"seat_{seat_name}", disabled=True, use_container_width=True)
+                        else:
+                            is_selected = seat_name in st.session_state.selected_seats
+                            btn_type = "primary" if is_selected else "secondary"
+                            if st.button(seat_name, key=f"seat_{seat_name}", type=btn_type, use_container_width=True):
+                                if is_selected: st.session_state.selected_seats.remove(seat_name)
+                                else: st.session_state.selected_seats.append(seat_name)
+                                st.rerun() 
+                                
+            st.divider()
+            num_selected = len(st.session_state.selected_seats)
+            base_price = m_data.get_base_price()
+            total_price = num_selected * base_price
+            
+            col_sum1, col_sum2 = st.columns([3, 1])
+            with col_sum1:
+                st.markdown(f"**Vị trí đã chọn:** {', '.join(st.session_state.selected_seats) if num_selected > 0 else 'Chưa chọn'}")
+                st.markdown(f"**Tổng Lệ phí:** <span style='color:#5C161B; font-size: 1.2rem; font-weight:bold;'>{total_price:,.0f} VNĐ</span>", unsafe_allow_html=True)
+            
+            # 1. TRONG CỘT BÊN PHẢI: Chỉ tạo nút bấm và gán vào một biến
+            with col_sum2:
+                # Lưu ý: gán nút bấm vào biến dat_ve_xong
+                dat_ve_xong = st.button("TRẢ TIỀN & NHẬN VÉ", type="primary", use_container_width=True, disabled=(num_selected==0))
+
+            # =========================================================
+            # 2. LÙI LỀ RA NGOÀI CÙNG (Thẳng hàng với chữ `with col_sum2:`)
+            # =========================================================
+            if dat_ve_xong:
+                success_count = 0
+                for seat in st.session_state.selected_seats:
+                    # (Đoạn code tách r, c và process_booking của bạn giữ nguyên ở đây)
+                    r = ord(seat[0]) - 65
+                    c = int(seat[1:]) - 1
+                    
+                    if booking_controller.process_booking(st.session_state.user_obj, m_data, st_data, r, c, movie_controller):
+                        success_count += 1
+                        
+                if success_count == len(st.session_state.selected_seats):
+                    st.success("🎉 Giao dịch thành công! Chúc quý khách xem phim vui vẻ.")
+                    
+                    # --- BẮT ĐẦU ĐOẠN HIỂN THỊ MÃ QR TRÀN MÀN HÌNH ---
+                    st.write("---")
+                    st.markdown("<h4 style='text-align: center; color: #5C161B;'>Vui lòng quét mã QR dưới đây để hoàn tất thanh toán</h4>", unsafe_allow_html=True)
+                    
+                    # Chia 3 cột đều nhau trên toàn màn hình, nhét ảnh vào cột giữa
+                    col_qr1, col_qr2, col_qr3 = st.columns([1, 1, 1]) 
+                    with col_qr2:
+                        st.image("https://i.postimg.cc/zXCdCsg3/image.png", use_container_width=True)
+                    # --- KẾT THÚC ĐOẠN HIỂN THỊ MÃ QR ---
+
+                    st.session_state.selected_seats = []           
+                else:
+                    st.error("⚠️ Có lỗi xảy ra hoặc ghế đã bị người khác giành mất!")
+# ------------------------------------------
+# D. GIAO DIỆN KHÁCH HÀNG - LỊCH SỬ VÉ
+# ------------------------------------------
+elif st.session_state.current_page == 'history':
+    if st.button("⬅TRỞ VỀ SẢNH CHÍNH", type="secondary"): navigate_to("home")
+    st.markdown("<h2 style='color:#5C161B;'>🎫 BỘ SƯU TẬP VÉ</h2>", unsafe_allow_html=True)
+    
+    # Lấy dữ liệu lịch sử từ Linked List Ticket
+    history_list = booking_controller.get_booking_history(st.session_state.user_obj.get_user_id())
+    
+    if not history_list:
+        st.info("Quý khách chưa sở hữu vé nào trong kho lưu trữ.")
+    else:
+        data = []
+        for ticket in history_list:
+            # Truy vấn tên phim dựa trên movie_id
+            m_node = movie_controller.search_by_id(ticket.get_movie_id())
+            m_title = m_node.get_data().get_title() if m_node else "Phim không xác định"
+            
+            data.append({
+                "Mã Vé": ticket.get_ticket_id(),
+                "Tên Phim": m_title,
+                "Ghế": ticket.get_seat_id(),
+                "Lệ phí": f"{ticket.get_price():,.0f} đ",
+                "Trạng thái": ticket.get_status()
+            })
+            
+        df_history = pd.DataFrame(data)
+        st.dataframe(df_history, use_container_width=True, hide_index=True)
+
+# ==========================================
+# 7. QUẢNG CÁO POPUP
+# ==========================================
+if not st.session_state.ad_closed and st.session_state.current_page == 'home' and st.session_state.user_role != 'admin':
+    show_advertisement()

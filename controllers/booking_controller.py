@@ -162,10 +162,7 @@ class BookingController:
         self._io_handler.save_tickets(
             self._ticket_list
         )
-        # Tăng doanh thu cho phim
-        current_revenue = movie.get_revenue()
-        movie.set_revenue(current_revenue + price)
-        
+       
         # Mượn movie_controller để lưu lại doanh thu
         self._io_handler.save_movies(self._movie_controller.get_movie_list())
         return True

@@ -367,7 +367,11 @@ class ShowtimeController:
             self._io_handler.save_showtimes(self._showtime_list)
         return success
 
-
-
-
-
+    def get_showtimes_by_movie(self, movie_id):
+            all_showtimes = self.get_showtime_data()
+            
+            if not all_showtimes:
+                return []
+                
+           # So sánh Mã ID trong file CSV với Mã ID truyền vào
+            return [s for s in all_showtimes if str(s.get_movie_id()).strip() == str(movie_id).strip()]
