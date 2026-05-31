@@ -21,6 +21,7 @@ class MovieController:
         self._io_handler.load_movies(
             self._movie_list
         )
+    
     def generate_movie_id(self):
 
         current = self._movie_list.get_head()
@@ -53,26 +54,20 @@ class MovieController:
     # THÊM PHIM
     # =================================================
 
-    def add_movie(
-        self,
-        movie: MovieData
-    ) -> bool:
+    def add_movie(self, movie: MovieData) -> bool:
+        
+        # Kiểm tra trùng tên phim (Ném lỗi thay vì print)
+        if self.search_by_title(movie.get_title()) is not None:
+            raise ValueError("Tên phim này đã tồn tại trong hệ thống!")
 
-        existed = (
-            self._movie_list
-            .search_id(
-                movie.get_movie_id()
-            )
-        )
-
+        # Kiểm tra trùng ID
+        existed = self._movie_list.search_id(movie.get_movie_id())
         if existed is not None:
             return False
 
+        # Thêm phim
         self._movie_list.add_movie(movie)
-
-        self._io_handler.save_movies(
-            self._movie_list
-        )
+        self._io_handler.save_movies(self._movie_list)
 
         return True
 
@@ -247,4 +242,6 @@ class MovieController:
     def save_data(self):
         """Cho phép các controller khác yêu cầu lưu file phim"""
         self._io_handler.save_movies(self._movie_list)
+
+
 
