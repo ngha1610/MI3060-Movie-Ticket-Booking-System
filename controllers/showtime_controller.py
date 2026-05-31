@@ -366,12 +366,41 @@ class ShowtimeController:
         if success:
             self._io_handler.save_showtimes(self._showtime_list)
         return success
-
-    def get_showtimes_by_movie(self, movie_id):
-            all_showtimes = self.get_showtime_data()
+    
+    # =================================================
+    # LẤY DANH SÁCH PHIM & SUẤT CHIẾU THEO NGÀY
+    # =================================================
+    def get_schedule_by_date(self, target_date: str, movie_controller):
+        """
+        Trả về danh sách các phim CÓ CHIẾU trong ngày target_date,
+        kèm theo danh sách các suất chiếu của phim đó.
+        """
+        # Cấu trúc: { movie_id: {"movie": MovieData, "showtimes": [st1, st2]} }
+        daily_schedule = {}
+        
+        current = self._showtime_list.get_head()
+        while current is not None:
+            st = current.get_data()
+            start_time_str = st.get_start_time()
             
-            if not all_showtimes:
-                return []
+            # Nếu suất chiếu khớp với ngày khách chọn
+            if isinstance(start_time_str, str) and start_time_str.startswith(target_date):
+                movie_id = st.get_movie_id()
                 
-           # So sánh Mã ID trong file CSV với Mã ID truyền vào
-            return [s for s in all_showtimes if str(s.get_movie_id()).strip() == str(movie_id).strip()]
+                # Nếu phim này chưa có trong nhóm, ta gọi movie_controller tìm phim và tạo nhóm mới
+                if movie_id not in daily_schedule:
+                    movie_node = movie_controller.search_by_id(movie_id)
+                    if movie_node is not None:
+                        daily_schedule[movie_id] = {
+                            "movie": movie_node.get_data(),
+                            "showtimes": []
+                        }
+                
+                # Nhét suất chiếu vào danh sách của phim tương ứng
+                if movie_id in daily_schedule:
+                    daily_schedule[movie_id]["showtimes"].append(st)
+                    
+            current = current.get_next()
+            
+        # Trả về list các nhóm để giao diện Streamlit dễ dùng vòng lặp
+        return list(daily_schedule.values())
