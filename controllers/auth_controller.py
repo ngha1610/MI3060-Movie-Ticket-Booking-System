@@ -1,3 +1,5 @@
+import threading
+
 from models.entities import (
     UserData
 )
@@ -13,9 +15,10 @@ from data_structures.file_io import (
 # =====================================================
 # AUTH CONTROLLER
 # =====================================================
+_auth_lock = threading.Lock()
 
 class AuthController:
-
+    
     def __init__(
         self,
         io_handler: FileIOHandler
@@ -94,64 +97,65 @@ class AuthController:
     # =================================================
     # ĐĂNG KÝ
     # =================================================
-
+    
     def register(
-        self,
-        username: str,
-        password: str,
-        confirm_password: str
-    ) -> bool:
+            self,
+            username: str,
+            password: str,
+            confirm_password: str
+        ) -> bool:
+        with _auth_lock:
 
-        # chuẩn hóa dữ liệu
-        username = username.strip()
-        password = password.strip()
-        confirm_password = (
-            confirm_password.strip()
-        )
+            # chuẩn hóa dữ liệu
+            username = username.strip()
+            password = password.strip()
+            confirm_password = (
+                confirm_password.strip()
+            )
 
-        # username rỗng
-        if not username:
-            return False
+            # username rỗng
+            if not username:
+                return False
 
-        # password quá ngắn
-        if len(password) < 6:
-            return False
+            # password quá ngắn
+            if len(password) < 6:
+                return False
 
-        # mật khẩu không khớp
-        if password != confirm_password:
-            return False
+            # mật khẩu không khớp
+            if password != confirm_password:
+                return False
 
-        # username đã tồn tại
-        if self._user_table.contains(
-            username
-        ):
-            return False
+            # username đã tồn tại
+            if self._user_table.contains(
+                username
+            ):
+                return False
 
-        # tạo user mới
-        user = UserData(
+            # tạo user mới
+            user = UserData(
 
-            username=username,
+                username=username,
 
-            password=password,
+                password=password,
 
-            role="CUSTOMER",
+                role="CUSTOMER",
 
-            user_id=
-            self._generate_user_id()
-        )
+                user_id=
+                self._generate_user_id()
+            )
 
-        # insert vào hash table
-        self._user_table.insert(
-            username,
-            user
-        )
+            # insert vào hash table
+            self._user_table.insert(
+                username,
+                user
+            )
 
-        # lưu file
-        self._io_handler.save_users(
-            self._user_table
-        )
+            # lưu file
+            self._io_handler.save_users(
+                self._user_table
+            )
 
-        return True
+            return True
 
     # =================================================
     # ĐĂNG XUẤT
@@ -211,4 +215,6 @@ class AuthController:
         return (
             self._user_table.get_all()
         )
+
+
 
