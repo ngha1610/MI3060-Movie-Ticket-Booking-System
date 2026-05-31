@@ -504,6 +504,45 @@ class BookingController:
                     pass # Bỏ qua nếu dữ liệu vé cũ bị lỗi
                     
             current = current.get_next()
+    # =================================================
+    # ADMIN HỦY VÉ
+    # =================================================
+    def admin_cancel_ticket(self, ticket_id: str) -> bool:
+        # Dùng lock nội bộ của BookingController để đảm bảo an toàn đa luồng
+        with self._booking_lock:
+            ticket_node = self._ticket_list.find_ticket(ticket_id)
+            if not ticket_node:
+                return False
+                
+            ticket = ticket_node.get_data()
+            
+            # Chỉ cho phép hủy nếu vé đang ở trạng thái BOOKED
+            if ticket.get_status() != "BOOKED":
+                return False
+                
+            # Giải phóng ghế thông qua showtime_controller trực tiếp
+            seat_id = ticket.get_seat_id()
+            row = ord(seat_id[0].upper()) - 65
+            col = int(seat_id[1:]) - 1
+            
+            self._showtime_controller.release_seat(
+                ticket.get_showtime_id(), row, col
+            )
+            
+            # Cập nhật trạng thái vé thành CANCELLED
+            ticket.set_status("CANCELLED")
+            
+            # Lưu lại danh sách vé vào file CSV
+            self._io_handler.save_tickets(self._ticket_list)
+            
+            # Đồng bộ lại ma trận hiển thị ghế
+            self._sync_matrix_from_tickets() 
+        
+            return True
+
+
+
+
 
 
 
