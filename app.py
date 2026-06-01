@@ -18,7 +18,6 @@ from controllers.admin_controller import AdminController
 # ==========================================
 st.set_page_config(
     page_title="Sunnyx Cinema | Classic & Modern",
-    page_icon="🎞️",
     layout="wide",
     initial_sidebar_state="expanded" 
 )
@@ -219,7 +218,7 @@ st.markdown("""
 # A. GIAO DIỆN QUẢN TRỊ VIÊN
 # ------------------------------------------
 if st.session_state.user_role == 'admin' and st.session_state.get('current_page') != 'booking':
-    st.markdown("<h2 style='color:#5C161B;'>⚙️ PHÒNG ĐIỀU HÀNH KỸ THUẬT</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='color:#5C161B;'>PHÒNG ĐIỀU HÀNH KỸ THUẬT</h2>", unsafe_allow_html=True)
     st.info("Khu vực dành riêng cho Quản đốc rạp (Admin).")
     
     # Hiển thị Metric
@@ -231,7 +230,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
     st.divider()
     
     # Chia Tab cho Admin
-    tab_manage, tab_display, tab_top, tab_offline, tab_tickets = st.tabs(["Quản Lý Phim", "Cấu Hình Giao Diện", "Top Doanh Thu", "Bán Vé Tại Quầy", "Quản Lý Vé"])
+    tab_manage, tab_showtime, tab_display, tab_top, tab_offline, tab_tickets = st.tabs(["Quản Lý Phim", "Quản Lý Suất Chiếu", "Cấu Hình Giao Diện", "Top Doanh Thu", "Bán Vé Tại Quầy", "Quản Lý Vé"])
     
     # TAB 1: QUẢN LÝ KHO PHIM (THÊM / SỬA / XÓA)
     with tab_manage:
@@ -260,36 +259,27 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                     if not new_title.strip() or not new_genre.strip():
                         st.error("Vui lòng điền đầy đủ Tên phim và Thể loại!")
                     else:
-                        # --- BẮT ĐẦU ĐOẠN CHÈN THÊM: KIỂM TRA TRÙNG TÊN ---
-                        current_movies = movie_controller.get_movie_data()
-                        is_duplicate = False
-                        for m in current_movies:
-                            # Chuyển hết về chữ thường để so sánh cho chuẩn xác
-                            if m.get_title().strip().lower() == new_title.strip().lower():
-                                is_duplicate = True
-                                break
+                        # CODE MỚI: Tạo object và gọi hàm trực tiếp, bọc trong try-except
+                        new_id = movie_controller.generate_movie_id()
+                        new_movie = MovieData(
+                            movie_id=new_id,
+                            title=new_title,
+                            genre=new_genre,
+                            duration=new_duration,
+                            description=new_desc,
+                            base_price=new_price,
+                            poster_path=new_poster
+                        )
                         
-                        if is_duplicate:
-                            st.error(f"❌ Lỗi: Phim '{new_title}' đã tồn tại trong kho!")
-                        # --- KẾT THÚC ĐOẠN KIỂM TRA ---
-                        
-                        else:
-                            # Nếu không trùng thì mới cho tạo ID và lưu phim (Code cũ của cậu)
-                            new_id = movie_controller.generate_movie_id()
-                            new_movie = MovieData(
-                                movie_id=new_id,
-                                title=new_title,
-                                genre=new_genre,
-                                duration=new_duration,
-                                description=new_desc,
-                                base_price=new_price,
-                                poster_path=new_poster
-                            )
+                        try:
                             if movie_controller.add_movie(new_movie):
-                                st.success(f"Đã thêm siêu phẩm '{new_title}' thành công!")
+                                st.success(f"Đã thêm phim '{new_title}' thành công!")
                                 st.rerun()
                             else:
                                 st.error("Lỗi hệ thống khi lưu phim!")
+                        except ValueError as e:
+                            # Bắt đúng lỗi "Tên phim này đã tồn tại trong hệ thống!" từ MovieController ném lên
+                            st.error(f"Lỗi: {e}")
         # --- CẬP NHẬT PHIM ---
         elif manage_action == "Cập Nhật Phim":
             if not movie_dict:
@@ -333,13 +323,133 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                 del_movie_title = st.selectbox("Chọn phim muốn xoá:", list(movie_dict.keys()))
                 del_movie = movie_dict[del_movie_title]
                 
-                st.error(f"⚠️ Cảnh báo: Bạn sắp xóa cuộn phim **{del_movie_title}**. Thao tác này không thể hoàn tác.")
+                st.error(f"Cảnh báo: Bạn sắp xóa cuộn phim **{del_movie_title}**. Thao tác này không thể hoàn tác.")
                 if st.button("XÁC NHẬN XÓA", type="primary"):
                     if movie_controller.delete_movie(del_movie.get_movie_id(), showtime_controller):
                         st.success(f"Đã dọn dẹp '{del_movie_title}' khỏi kho!")
                         st.rerun()
                     else:
                         st.error("Không thể xóa! Phim này đang có suất chiếu hoạt động hoặc khách đã mua vé.")
+
+    # TAB 1.5: QUẢN LÝ SUẤT CHIẾU (THÊM / XÓA LỊCH CHIẾU)
+    with tab_showtime:
+        st_action = st.radio("Chọn thao tác:", ["Thêm Suất Chiếu Mới", "Xóa Suất Chiếu"], horizontal=True, key="st_action_radio")
+        st.write("---")
+
+        all_movies = movie_controller.get_movie_data()
+        all_showtimes = showtime_controller.get_showtime_data()
+
+        # ==========================================
+        # CHỨC NĂNG 1: THÊM SUẤT CHIẾU
+        # ==========================================
+        if st_action == "Thêm Suất Chiếu Mới":
+            if not all_movies:
+                st.warning("Kho rỗng. Vui lòng vào Tab 'Quản Lý Phim' để thêm phim trước khi tạo suất chiếu.")
+            else:
+                # Dùng vòng lặp cơ bản để tạo list tên phim (Tránh dùng list comprehension)
+                movie_titles = ["-- Chọn phim --"]
+                for m in all_movies:
+                    movie_titles.append(m.get_title())
+
+                with st.form("add_showtime_form"):
+                    st.subheader("Lên Lịch Chiếu Mới")
+                    sel_movie_title = st.selectbox("1. Chọn Tác Phẩm", movie_titles)
+
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        new_date = st.text_input("2. Ngày chiếu (Định dạng: YYYY-MM-DD)", placeholder="VD: 2026-06-01")
+                        room_id = st.text_input("4. Mã Phòng Chiếu", value="R01")
+                    with c2:
+                        new_time = st.text_input("3. Giờ chiếu (Định dạng: HH:MM)", placeholder="VD: 19:30")
+                        room_rows = st.number_input("Số hàng ghế của phòng", min_value=1, value=10)
+                        room_cols = st.number_input("Số cột ghế của phòng", min_value=1, value=10)
+
+                    if st.form_submit_button("TẠO SUẤT CHIẾU", type="primary"):
+                        if sel_movie_title == "-- Chọn phim --":
+                            st.error("Vui lòng chọn phim!")
+                        elif not new_date.strip() or not new_time.strip():
+                            st.error("Vui lòng nhập đầy đủ ngày và giờ chiếu!")
+                        else:
+                            # 1. Tìm ID phim bằng vòng lặp
+                            selected_movie_id = None
+                            for m in all_movies:
+                                if m.get_title() == sel_movie_title:
+                                    selected_movie_id = m.get_movie_id()
+                                    break
+
+                            # 2. Nối chuỗi ngày giờ
+                            start_time_str = f"{new_date.strip()} {new_time.strip()}"
+
+                            # 3. Tạo ID suất chiếu mới tự động
+                            new_st_id = showtime_controller.generate_showtime_id()
+
+                            # 4. Khởi tạo đối tượng Showtime
+                            from models.entities import Showtime
+                            new_showtime = Showtime(
+                                showtime_id=new_st_id,
+                                movie_id=selected_movie_id,
+                                start_time=start_time_str,
+                                room_id=room_id.strip(),
+                                room_rows=room_rows,
+                                room_cols=room_cols
+                            )
+
+                            # 5. Gọi Controller để kiểm tra trùng giờ và lưu file
+                            success = showtime_controller.add_showtime(new_showtime, movie_controller)
+                            if success:
+                                st.success("Đã lên lịch suất chiếu thành công!")
+                                st.rerun()
+                            else:
+                                st.error("Lỗi: Khung giờ này bị trùng lặp với suất chiếu khác trong cùng phòng! Vui lòng chọn giờ khác.")
+
+        # ==========================================
+        # CHỨC NĂNG 2: XÓA SUẤT CHIẾU
+        # ==========================================
+        elif st_action == "Xóa Suất Chiếu":
+            if not all_showtimes:
+                st.warning("Hiện chưa có suất chiếu nào trên hệ thống.")
+            else:
+                st_options = ["-- Chọn suất chiếu cần xóa --"]
+                st_mapping = {}
+
+                # Dùng vòng lặp dò thông tin chi tiết từng suất chiếu để Admin dễ chọn
+                for st_obj in all_showtimes:
+                    # Tìm tên phim
+                    m_title = "Phim không xác định"
+                    for m in all_movies:
+                        if m.get_movie_id() == st_obj.get_movie_id():
+                            m_title = m.get_title()
+                            break
+
+                    # Gọi hàm code tay extract_date và extract_time
+                    st_date = showtime_controller.extract_date(st_obj)
+                    st_time = showtime_controller.extract_time(st_obj)
+                    
+                    # Tạo nhãn hiển thị cho Dropdown
+                    display_str = f"{m_title} | {st_date} - {st_time} | Phòng: {st_obj.get_room_id()}"
+                    
+                    st_options.append(display_str)
+                    st_mapping[display_str] = st_obj.get_showtime_id()
+
+                with st.form("del_showtime_form"):
+                    st.subheader("Dọn Dẹp Lịch Chiếu")
+                    sel_st_str = st.selectbox("Danh sách các suất chiếu hiện tại:", st_options)
+
+                    st.error("Lưu ý: Chỉ có thể xóa suất chiếu khi chưa có khách hàng nào đặt vé!")
+                    if st.form_submit_button("XÓA SUẤT CHIẾU NÀY", type="primary"):
+                        if sel_st_str == "-- Chọn suất chiếu cần xóa --":
+                            st.warning("Vui lòng chọn suất chiếu!")
+                        else:
+                            target_st_id = st_mapping[sel_st_str]
+                            
+                            # Gọi hàm xóa, truyền booking_controller vào để nó tự check xem có vé nào thuộc suất này chưa
+                            success = showtime_controller.delete_showtime(target_st_id, booking_controller)
+
+                            if success:
+                                st.success(f"Đã dọn dẹp thành công suất chiếu!")
+                                st.rerun()
+                            else:
+                                st.error("Lỗi: Không thể xóa! Suất chiếu này đã có khách hàng mua vé.")
 
     # TAB 2: CẤU HÌNH HIỂN THỊ TRANG CHỦ
     with tab_display:
@@ -367,7 +477,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
         top_movies = admin_controller.get_top_movies_by_revenue()
         if top_movies:
             for m in top_movies:
-                st.markdown(f"**🎞️ {m.get_title()}** | Sinh lời: <span style='color:#5C161B; font-weight:bold;'>{m.get_revenue():,.0f} đ</span>", unsafe_allow_html=True)
+                st.markdown(f"**{m.get_title()}** | Sinh lời: <span style='color:#5C161B; font-weight:bold;'>{m.get_revenue():,.0f} đ</span>", unsafe_allow_html=True)
                 st.caption(f"Thể loại: {m.get_genre()} | Thời lượng: {m.get_duration()} phút")
                 st.divider()
         else:
@@ -377,19 +487,13 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
         st.subheader("QUẦY BÁN VÉ TRỰC TIẾP (OFFLINE)")
         st.info("Nhân viên xuất vé cho khách mua trực tiếp tại rạp. Đi thẳng vào trang chọn ghế.")
         
-        # Hàm hỗ trợ tách Ngày và Giờ (CHUẨN 100% THEO FILE ENTITIES)
-        def get_date(s):
-            return str(s.get_start_time()).split()[0] if " " in str(s.get_start_time()) else str(s.get_start_time())
-            
-        def get_time(s):
-            return str(s.get_start_time()).split()[1] if " " in str(s.get_start_time()) else ""
         
         all_movies = movie_controller.get_movie_data()
         all_showtimes = showtime_controller.get_showtime_data()
 
         booking_mode = st.radio(
             "Bạn muốn tìm lịch chiếu theo cách nào?", 
-            ["🎬 Chọn Phim trước", "📅 Chọn Ngày trước"], 
+            ["Chọn Phim trước", "Chọn Ngày trước"], 
             horizontal=True,
             key="admin_mode_radio"
         )
@@ -400,7 +504,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
         # ==========================================
         # LUỒNG 1: CHỌN PHIM -> NGÀY -> GIỜ
         # ==========================================
-        if booking_mode == "🎬 Chọn Phim trước":
+        if booking_mode == "Chọn Phim trước":
             with qb1:
                 movie_titles = [m.get_title() for m in all_movies] if all_movies else ["Hiện chưa có phim"]
                 selected_title = st.selectbox("1. Chọn Cuộn Phim", ["-- Chọn phim --"] + movie_titles, key="admin_movie_sel_1")
@@ -409,14 +513,14 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                 selected_fast_movie = selected_title 
                 selected_movie_id = next((m.get_movie_id() for m in all_movies if m.get_title() == selected_title), None)
                 movie_shows = [s for s in all_showtimes if str(s.get_movie_id()).strip() == str(selected_movie_id).strip()]
-                available_dates = sorted(list(set([get_date(s) for s in movie_shows])))
+                available_dates = showtime_controller.get_unique_sorted_dates(movie_shows)
                 
                 with qb2:
                     selected_date = st.selectbox("2. Ngày Chiếu", ["-- Chọn ngày --"] + available_dates if available_dates else ["Chưa có lịch"], key="admin_date_sel_1")
                     
                 if selected_date != "-- Chọn ngày --" and selected_date != "Chưa có lịch":
-                    date_shows = [s for s in movie_shows if get_date(s) == selected_date]
-                    available_times = sorted(list(set([get_time(s) for s in date_shows])))
+                    date_shows = [s for s in movie_shows if showtime_controller.extract_date(s) == selected_date]
+                    available_times = showtime_controller.get_unique_sorted_times(date_shows)
                     with qb3:
                         selected_time = st.selectbox("3. Khung Giờ", ["-- Chọn giờ --"] + available_times if available_times else ["Chưa có giờ"], key="admin_time_sel_1")
                 else:
@@ -434,7 +538,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
         else: 
             with qb1:
                 # Vẫn lấy toàn bộ ngày từ hệ thống để hiển thị cho Ô 1
-                all_dates = sorted(list(set([get_date(s) for s in all_showtimes if get_date(s)])))
+                all_dates = showtime_controller.get_unique_sorted_dates(all_showtimes)
                 selected_date = st.selectbox("1. Ngày Chiếu", ["-- Chọn ngày --"] + all_dates if all_dates else ["Chưa có lịch"], key="admin_date_sel_2")
                 
             if selected_date != "-- Chọn ngày --" and selected_date != "Chưa có lịch":
@@ -456,7 +560,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                     
                     if selected_group:
                         # Móc danh sách các suất chiếu từ trong Gói đó ra và lấy Giờ
-                        available_times = sorted(list(set([get_time(st) for st in selected_group["showtimes"]])))
+                        available_times = showtime_controller.get_unique_sorted_times(selected_group["showtimes"])
                         with qb3:
                             selected_time = st.selectbox("3. Khung Giờ", ["-- Chọn giờ --"] + available_times if available_times else ["Chưa có giờ"], key="admin_time_sel_2")
                 else:
@@ -472,19 +576,18 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
         # CHỐT SUẤT CHIẾU & CHỌN GHẾ TẠI CHỖ
         # ==========================================
         st.markdown("---")
-        st.subheader("💺 TIẾN HÀNH CHỌN GHẾ & IN VÉ")
+        st.subheader("TIẾN HÀNH CHỌN GHẾ & IN VÉ")
         
         # 1. Dò lại đúng Object Phim và Object Suất Chiếu từ kho dữ liệu
         movie_obj = next((m for m in all_movies if m.get_title() == selected_fast_movie), None)
         
         showtime_obj = None
         if movie_obj and selected_date not in ["-- Chọn ngày --", "Chưa có lịch", None] and selected_time not in ["-- Chọn giờ --", "Chưa có giờ", None]:
-            showtime_obj = next(
-                (s for s in all_showtimes 
-                 if s.get_movie_id() == movie_obj.get_movie_id() 
-                 and get_date(s) == selected_date 
-                 and get_time(s) == selected_time), 
-                None
+            # Gọi trực tiếp Controller để bới đúng suất chiếu
+            showtime_obj = showtime_controller.find_exact_showtime(
+                movie_obj.get_movie_id(),
+                selected_date,
+                selected_time
             )
 
         # 2. Nếu đã chọn xong Phim + Ngày + Giờ thì mới mở khóa bảng chọn ghế
@@ -503,7 +606,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                 
                 # Nút bấm in vé sẽ gọi trực tiếp xuống admin_controller của cậu
-                if st.button("🎟️ XUẤT VÉ CHO KHÁCH", type="primary", use_container_width=True, key="admin_btn_issue_ticket"):
+                if st.button("XUẤT VÉ CHO KHÁCH", type="primary", use_container_width=True, key="admin_btn_issue_ticket"):
                     
                     ticket_id = admin_controller.sell_ticket_at_counter(
                         movie=movie_obj,
@@ -513,26 +616,18 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                     )
                     
                     if ticket_id:
-                        st.success(f"✅ Giao dịch thành công! Mã vé điện tử: **{ticket_id}**")
+                        st.success(f"Giao dịch thành công! Mã vé điện tử: **{ticket_id}**")
                     else:
-                        st.error("❌ Lỗi: Ghế này đã được bán hoặc hệ thống đang bận. Vui lòng đổi ghế khác!")
+                        st.error("Lỗi: Ghế này đã được bán hoặc hệ thống đang bận. Vui lòng đổi ghế khác!")
         else:
-            st.info("⚠️ Vui lòng hoàn tất việc chọn Phim, Ngày và Giờ ở phía trên để hệ thống hiển thị khoang ghế.")
+            st.info("Vui lòng hoàn tất việc chọn Phim, Ngày và Giờ ở phía trên để hệ thống hiển thị khoang ghế.")
     # TAB 5: QUẢN LÝ VÉ & HỦY VÉ
     with tab_tickets:
         st.subheader("HỦY VÉ & GIẢI PHÓNG GHẾ")
         st.info("Chọn vé từ danh sách bên dưới để hệ thống hoàn trống ghế.")
         
-        # 1. Kéo toàn bộ dữ liệu vé từ kho lên
-        all_tickets = booking_controller.get_ticket_data()
-        
-        # 2. Lọc ra những vé ĐANG HOẠT ĐỘNG (Đã bán) để đưa vào danh sách hủy
-        active_tickets = []
-        for t in all_tickets:
-            status = str(t.get_status()).strip().upper()
-            # Bắt đúng logic status mà hệ thống cậu đang dùng
-            if status in ["BOOKED", "2", "SEATSTATUS.BOOKED"]:
-                active_tickets.append(t)
+       # Gọi trực tiếp Controller để lấy danh sách vé đang hoạt động
+        active_tickets = admin_controller.get_active_tickets()
                 
         if not active_tickets:
             st.success("Hiện không có vé nào đang hoạt động hoặc cần hủy.")
@@ -563,19 +658,19 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                 if st.button("XÁC NHẬN HỦY VÉ", type="primary", use_container_width=True):
                     
                     if selected_ticket_str == "-- Chọn vé cần hủy --":
-                        st.warning("⚠️ Vui lòng chọn một vé từ danh sách!")
+                        st.warning("Vui lòng chọn một vé từ danh sách!")
                     else:
                         # Lấy lại cái ID thực sự ẩn giấu đằng sau chuỗi hiển thị
                         cancel_ticket_id = ticket_mapping[selected_ticket_str]
                         
                         # Gọi hàm hủy vé dưới tầng Admin Controller
-                        success = admin_controller.cancel_ticket(cancel_ticket_id, showtime_controller)
+                        success = booking_controller.admin_cancel_ticket(cancel_ticket_id)
                         
                         if success:
-                            st.success(f"✅ Đã hủy vé {cancel_ticket_id} và giải phóng ghế thành công!")
+                            st.success(f"Đã hủy vé {cancel_ticket_id} và giải phóng ghế thành công!")
                             st.rerun() # Tải lại trang để vé biến mất khỏi danh sách
                         else:
-                            st.error("❌ Hủy vé thất bại! Hệ thống không thể giải phóng ghế.")
+                            st.error("Hủy vé thất bại! Hệ thống không thể giải phóng ghế.")
 # ------------------------------------------
 # B. GIAO DIỆN KHÁCH HÀNG - TRANG CHỦ
 # ------------------------------------------
@@ -677,20 +772,13 @@ elif st.session_state.current_page == 'home':
     all_movies = movie_controller.get_movie_data()
     all_showtimes = showtime_controller.get_showtime_data()
 
-    # Hàm hỗ trợ tách Ngày và Giờ (Chốt cứng dùng split cắt chuỗi)
-    def get_date(s):
-        return str(s.get_start_time()).split()[0] if " " in str(s.get_start_time()) else str(s.get_start_time())
-        
-    def get_time(s):
-        return str(s.get_start_time()).split()[1] if " " in str(s.get_start_time()) else ""
-
     with st.container():
-        st.markdown('<div class="vintage-ticket"><div class="ticket-title">🎟️ QUẦY BÁN VÉ NHANH</div>', unsafe_allow_html=True)
+        st.markdown('<div class="vintage-ticket"><div class="ticket-title">QUẦY BÁN VÉ NHANH</div>', unsafe_allow_html=True)
         
         # --- LỰA CHỌN LUỒNG ĐẶT VÉ ---
         booking_mode = st.radio(
             "Bạn muốn tìm lịch chiếu theo cách nào?", 
-            ["🎬 Chọn Phim", "📅 Chọn Lịch chiếu"], 
+            ["Chọn Phim", "Chọn Lịch chiếu"], 
             horizontal=True,
             key="cust_booking_mode" # Thêm key để Streamlit không nhầm với form Admin
         )
@@ -702,7 +790,7 @@ elif st.session_state.current_page == 'home':
         # ==========================================
         # LUỒNG 1: CHỌN PHIM -> NGÀY -> GIỜ
         # ==========================================
-        if booking_mode == "🎬 Chọn Phim":
+        if booking_mode == "Chọn Phim":
             with qb1:
                 movie_titles = [m.get_title() for m in all_movies] if all_movies else ["Hiện chưa có phim"]
                 selected_title = st.selectbox("1. Chọn Cuộn Phim", ["-- Chọn phim --"] + movie_titles, key="cust_movie_sel_1")
@@ -712,14 +800,14 @@ elif st.session_state.current_page == 'home':
                 selected_movie_id = next((m.get_movie_id() for m in all_movies if m.get_title() == selected_title), None)
                 
                 movie_shows = [s for s in all_showtimes if str(s.get_movie_id()).strip() == str(selected_movie_id).strip()]
-                available_dates = sorted(list(set([get_date(s) for s in movie_shows])))
+                available_dates = showtime_controller.get_unique_sorted_dates(movie_shows)
                 
                 with qb2:
                     selected_date = st.selectbox("2. Ngày Chiếu", ["-- Chọn ngày --"] + available_dates if available_dates else ["Chưa có lịch"], key="cust_date_sel_1")
                     
                 if selected_date != "-- Chọn ngày --" and selected_date != "Chưa có lịch":
-                    date_shows = [s for s in movie_shows if get_date(s) == selected_date]
-                    available_times = sorted(list(set([get_time(s) for s in date_shows])))
+                    date_shows = [s for s in movie_shows if showtime_controller.extract_date(s) == selected_date]
+                    available_times = showtime_controller.get_unique_sorted_times(date_shows)
                     with qb3:
                         selected_time = st.selectbox("3. Khung Giờ", ["-- Chọn giờ --"] + available_times if available_times else ["Chưa có giờ"], key="cust_time_sel_1")
                 else:
@@ -736,7 +824,7 @@ elif st.session_state.current_page == 'home':
         # ==========================================
         else: 
             with qb1:
-                all_dates = sorted(list(set([get_date(s) for s in all_showtimes if get_date(s)])))
+                all_dates = showtime_controller.get_unique_sorted_dates(all_showtimes)
                 selected_date = st.selectbox("1. Ngày Chiếu", ["-- Chọn ngày --"] + all_dates if all_dates else ["Chưa có lịch"], key="cust_date_sel_2")
                 
             if selected_date != "-- Chọn ngày --" and selected_date != "Chưa có lịch":
@@ -752,7 +840,7 @@ elif st.session_state.current_page == 'home':
                     
                     selected_group = next((g for g in daily_schedule if g["movie"].get_title() == selected_title), None)
                     if selected_group:
-                        available_times = sorted(list(set([get_time(st) for st in selected_group["showtimes"]])))
+                        available_times = showtime_controller.get_unique_sorted_times(selected_group["showtimes"])
                         with qb3:
                             selected_time = st.selectbox("3. Khung Giờ", ["-- Chọn giờ --"] + available_times if available_times else ["Chưa có giờ"], key="cust_time_sel_2")
                 else:
@@ -771,9 +859,9 @@ elif st.session_state.current_page == 'home':
             st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
             if st.button("XUẤT VÉ", type="primary", use_container_width=True, key="cust_btn_book"):
                 if not st.session_state.is_logged_in:
-                    st.error("⚠️ Xuất trình thẻ thành viên (Đăng nhập)!")
+                    st.error("Xuất trình thẻ thành viên (Đăng nhập)!")
                 elif not selected_fast_movie or selected_fast_movie == "-- Chọn phim --":
-                    st.warning("⚠️ Vui lòng chọn phim và lịch chiếu hoàn chỉnh!")
+                    st.warning("Vui lòng chọn phim và lịch chiếu hoàn chỉnh!")
                 elif selected_fast_movie == "Hiện chưa có phim":
                     st.error("Rạp đang bảo trì phim!")
                 else:
@@ -799,7 +887,7 @@ elif st.session_state.current_page == 'home':
                 """, unsafe_allow_html=True)
                 if st.button(f"MUA VÉ", key=f"btn_{title}", use_container_width=True, type="primary"):
                     if not st.session_state.is_logged_in:
-                        st.error(f"⚠️ Vui lòng đăng nhập để đặt vé!")
+                        st.error(f"Vui lòng đăng nhập để đặt vé!")
                     else:
                         navigate_to("booking", title)
 
@@ -830,10 +918,10 @@ elif st.session_state.current_page == 'home':
 # C. GIAO DIỆN KHÁCH HÀNG - ĐẶT GHẾ (BOOKING)
 # ------------------------------------------
 elif st.session_state.current_page == 'booking':
-    if st.button("⬅TRỞ VỀ SẢNH CHÍNH", type="secondary"): navigate_to("home")
+    if st.button("TRỞ VỀ SẢNH CHÍNH", type="secondary"): navigate_to("home")
     
     selected_movie_title = st.session_state.selected_movie
-    st.markdown(f"<h2 style='color:#5C161B;'>🎫 XUẤT VÉ: {selected_movie_title}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<h2 style='color:#5C161B;'>XUẤT VÉ: {selected_movie_title}</h2>", unsafe_allow_html=True)
     
     # Tìm phim tương ứng
     movie_node = movie_controller.search_by_title(selected_movie_title)
@@ -847,9 +935,9 @@ elif st.session_state.current_page == 'booking':
         st_data = next((s for s in showtimes if s.get_movie_id() == m_data.get_movie_id()), None)
         
         if st_data is None:
-            st.warning("⚠️ Rạp chưa mở khung giờ chiếu nào cho tác phẩm này. Vui lòng quay lại sau!")
+            st.warning("Rạp chưa mở khung giờ chiếu nào cho tác phẩm này. Vui lòng quay lại sau!")
         else:
-            st.info(f"📍 Địa điểm: Sunnyx Vintage Cinema | 🎬 Phòng: {st_data.get_room_id()} | ⏰ Giờ chiếu: {st_data.get_start_time()}")
+            st.info(f"Địa điểm: Sunnyx Cinema | Phòng: {st_data.get_room_id()} | Giờ chiếu: {st_data.get_start_time()}")
             st.markdown('<div class="seat-screen">MÀN CHIẾU BẠC</div>', unsafe_allow_html=True)
             st.write("")
             
@@ -905,7 +993,7 @@ elif st.session_state.current_page == 'booking':
                         for seat in st.session_state.selected_seats:
                             r = ord(seat[0]) - 65
                             c = int(seat[1:]) - 1
-                            if booking_controller.process_booking(st.session_state.user_obj, m_data, st_data, r, c, movie_controller):
+                            if booking_controller.process_booking(st.session_state.user_obj, m_data, st_data, r, c):
                                 success_count += 1
                                 
                         if success_count == len(st.session_state.selected_seats):
@@ -916,7 +1004,7 @@ elif st.session_state.current_page == 'booking':
                             st.session_state.pending_seats = st.session_state.selected_seats.copy()
                             st.rerun() # F5 lại trang để hiện Form QR
                         else:
-                            st.error("⚠️ Ghế này vừa có người nhanh tay hơn đặt mất. Vui lòng chọn lại!")
+                            st.error("Ghế này vừa có người nhanh tay hơn đặt mất. Vui lòng chọn lại!")
 
             # =========================================================
             # 2. MÀN HÌNH MÃ QR & ĐẾM NGƯỢC 3 PHÚT
@@ -963,10 +1051,10 @@ elif st.session_state.current_page == 'booking':
                         st.write("")
                         
                         # Nút xác nhận khi khách đã bank tiền
-                        if st.button("✅ TÔI ĐÃ CHUYỂN KHOẢN XONG", type="primary", use_container_width=True):
+                        if st.button("TÔI ĐÃ CHUYỂN KHOẢN XONG", type="primary", use_container_width=True):
                             # Check lại Backend lần cuối để chống khách hàng dùng tiểu xảo gian lận JS
-                            if time.time() - st.session_state.payment_start_time <= 180:
-                                st.success("🎉 Giao dịch thành công! Chúc quý khách xem phim vui vẻ.")
+                            if time.time() - st.session_state.payment_start_time <= 300:
+                                st.success("Giao dịch thành công! Chúc quý khách xem phim vui vẻ.")
                                 st.balloons()
                                 # Dọn dẹp giỏ hàng
                                 st.session_state.selected_seats = []
@@ -975,24 +1063,15 @@ elif st.session_state.current_page == 'booking':
                                 st.rerun() # Ép tải lại trang để code nhảy xuống luồng Hủy vé bên dưới
                 
                 else:
+               # =========================================================
+                    # 3. QUÁ 5 PHÚT -> TỰ ĐỘNG HỦY VÉ KHÁCH HÀNG
                     # =========================================================
-                    # 3. QUÁ 3 PHÚT -> TỰ ĐỘNG GỌI ADMIN RA CHÉM VÉ
-                    # =========================================================
-                    st.error("⏳ ĐÃ QUÁ THỜI GIAN THANH TOÁN (3 PHÚT)!")
+                    st.error("ĐÃ QUÁ THỜI GIAN THANH TOÁN!")
                     
-                    # Bước 1: Quét lịch sử đặt vé của đúng khách hàng này
-                    history_list = booking_controller.get_booking_history(st.session_state.user_obj.get_user_id())
+                    # Gọi hàm tự động quét và giải phóng vé quá hạn của Controller (Set timeout = 3 phút)
+                    booking_controller.cleanup_unfinished_reservations(timeout_minutes=3)
                     
-                    # Bước 2: Dò tìm ID của cái vé vừa bị xí chỗ
-                    if history_list:
-                        for ticket in history_list:
-                            # Khớp đúng ID Suất chiếu + Nằm trong danh sách ghế vừa xí
-                            if ticket.get_showtime_id() == st.session_state.pending_showtime_id and ticket.get_seat_id() in st.session_state.pending_seats:
-                                
-                                # Bước 3: THI HÀNH LỆNH HỦY VÉ !
-                                admin_controller.cancel_ticket(ticket.get_ticket_id(), showtime_controller)
-                    
-                    st.warning("⚠️ Hệ thống đã tự động Hủy giao dịch và hoàn trống ghế thành công!")
+                    st.warning("Hệ thống đã tự động Hủy giao dịch và hoàn trống ghế thành công!")
                     
                     # Reset lại trạng thái để khách chọn lại từ đầu
                     st.session_state.selected_seats = []
@@ -1005,8 +1084,8 @@ elif st.session_state.current_page == 'booking':
 # D. GIAO DIỆN KHÁCH HÀNG - LỊCH SỬ VÉ
 # ------------------------------------------
 elif st.session_state.current_page == 'history':
-    if st.button("⬅TRỞ VỀ SẢNH CHÍNH", type="secondary"): navigate_to("home")
-    st.markdown("<h2 style='color:#5C161B;'>🎫 BỘ SƯU TẬP VÉ</h2>", unsafe_allow_html=True)
+    if st.button("TRỞ VỀ SẢNH CHÍNH", type="secondary"): navigate_to("home")
+    st.markdown("<h2 style='color:#5C161B;'>BỘ SƯU TẬP VÉ</h2>", unsafe_allow_html=True)
     
     # Lấy dữ liệu lịch sử từ Linked List Ticket
     history_list = booking_controller.get_booking_history(st.session_state.user_obj.get_user_id())
