@@ -404,3 +404,15 @@ class ShowtimeController:
             
         # Trả về list các nhóm để giao diện Streamlit dễ dùng vòng lặp
         return list(daily_schedule.values())
+    # =================================================
+    # HÀM HỖ TRỢ TÁCH NGÀY GIỜ CHO GIAO DIỆN
+    # =================================================
+    def extract_date(self, showtime):
+        """Tách lấy ngày từ object Showtime"""
+        start = str(showtime.get_start_time())
+        return start.split()[0] if " " in start else start
+
+    def extract_time(self, showtime):
+        """Tách lấy giờ từ object Showtime"""
+        start = str(showtime.get_start_time())
+        return start.split()[1] if " " in start else ""
