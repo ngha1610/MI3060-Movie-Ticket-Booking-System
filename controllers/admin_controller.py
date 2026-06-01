@@ -106,3 +106,16 @@ class AdminController:
             "top_movies":
             self.get_top_movies_by_revenue()
         }
+    # =================================================
+    # LẤY DANH SÁCH VÉ ĐANG HOẠT ĐỘNG (ĐỂ HỦY)
+    # =================================================
+    def get_active_tickets(self):
+        all_tickets = self._booking_controller.get_ticket_data()
+        active_tickets = []
+        
+        for t in all_tickets:
+            status = str(t.get_status()).strip().upper()
+            if status in ["BOOKED", "2", "SEATSTATUS.BOOKED"]:
+                active_tickets.append(t)
+                
+        return active_tickets

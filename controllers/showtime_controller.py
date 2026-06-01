@@ -416,3 +416,110 @@ class ShowtimeController:
         """Tách lấy giờ từ object Showtime"""
         start = str(showtime.get_start_time())
         return start.split()[1] if " " in start else ""
+    # =================================================
+    # HÀM HỖ TRỢ XỬ LÝ CHUỖI & MẢNG (CODE TAY 100%)
+    # =================================================
+    
+    def extract_date(self, showtime):
+        """Tách ngày bằng vòng lặp, duyệt đến khi gặp khoảng trắng thì dừng"""
+        start = str(showtime.get_start_time())
+        date_str = ""
+        for char in start:
+            if char == " ":
+                break
+            date_str += char
+        return date_str
+
+    def extract_time(self, showtime):
+        """Tách giờ bằng vòng lặp, lấy các ký tự sau khoảng trắng"""
+        start = str(showtime.get_start_time())
+        time_str = ""
+        found_space = False
+        for char in start:
+            if found_space:
+                time_str += char
+            elif char == " ":
+                found_space = True
+        return time_str
+
+    def get_unique_sorted_dates(self, showtimes_list):
+        """Lọc trùng và Sắp xếp mảng Ngày (Bubble Sort)"""
+        # 1. Lấy tất cả các ngày
+        raw_dates = []
+        for s in showtimes_list:
+            raw_dates.append(self.extract_date(s))
+            
+        # 2. Lọc trùng (Thay cho set)
+        unique_dates = []
+        for d in raw_dates:
+            is_duplicate = False
+            for u in unique_dates:
+                if u == d:
+                    is_duplicate = True
+                    break
+            if not is_duplicate and d != "":
+                unique_dates.append(d)
+                
+        # 3. Thuật toán sắp xếp nổi bọt (Thay cho sorted)
+        n = len(unique_dates)
+        for i in range(n):
+            for j in range(0, n - i - 1):
+                if unique_dates[j] > unique_dates[j + 1]:
+                    # Hoán đổi vị trí
+                    temp = unique_dates[j]
+                    unique_dates[j] = unique_dates[j + 1]
+                    unique_dates[j + 1] = temp
+                    
+        return unique_dates
+
+    def get_unique_sorted_times(self, showtimes_list):
+        """Lọc trùng và Sắp xếp mảng Giờ (Bubble Sort)"""
+        raw_times = []
+        for s in showtimes_list:
+            raw_times.append(self.extract_time(s))
+            
+        unique_times = []
+        for t in raw_times:
+            is_duplicate = False
+            for u in unique_times:
+                if u == t:
+                    is_duplicate = True
+                    break
+            if not is_duplicate and t != "":
+                unique_times.append(t)
+                
+        n = len(unique_times)
+        for i in range(n):
+            for j in range(0, n - i - 1):
+                if unique_times[j] > unique_times[j + 1]:
+                    temp = unique_times[j]
+                    unique_times[j] = unique_times[j + 1]
+                    unique_times[j + 1] = temp
+                    
+        return unique_times
+    # =================================================
+    # TÌM SUẤT CHIẾU CHÍNH XÁC THEO NGÀY GIỜ
+    # =================================================
+    def find_exact_showtime(self, movie_id: str, target_date: str, target_time: str):
+        # Bắt đầu duyệt từ đầu danh sách liên kết
+        current = self._showtime_list.get_head()
+        
+        while current is not None:
+            st = current.get_data()
+            
+            # 1. Kiểm tra có đúng ID phim không
+            if st.get_movie_id() == movie_id:
+                
+                # 2. Dùng hàm extract_date và extract_time đã code tay lúc nãy để lấy chuỗi
+                st_date = self.extract_date(st)
+                st_time = self.extract_time(st)
+                
+                # 3. Trùng cả ngày và giờ thì chốt luôn suất chiếu này
+                if st_date == target_date and st_time == target_time:
+                    return st
+                    
+            # Nhảy sang Node tiếp theo
+            current = current.get_next()
+            
+        # Duyệt hết danh sách mà không thấy thì trả về None
+        return None
