@@ -51,27 +51,27 @@ class UserData:
 # =========================================================
 
 class TicketData:
-    def __init__(self, ticket_id, user_id, movie_id, seat_id, status, showtime_id,room_id, price):
-
+    def __init__(self, ticket_id, user_id, movie_id, seat_id, status, showtime_id, room_id, price, booking_time=None):
         if price < 0:
             raise ValueError("Giá vé không hợp lệ")
 
         self._ticket_id = ticket_id
-
         self._user_id = user_id
         self._movie_id = movie_id
         self._seat_id = seat_id
-
         self._status = status
-
         self._showtime_id = showtime_id
         self._room_id = room_id
-
         self._price = price
+        # Lưu thời gian
+        self._booking_time = booking_time
 
-        # thời gian đặt vé
-        self._booking_time = datetime.now()
-
+    def get_booking_time(self):
+        return self._booking_time
+    
+    def set_status(self, status):
+        self._status = status
+    
     def get_ticket_id(self):
         return self._ticket_id
     def get_user_id(self):
@@ -330,20 +330,27 @@ class Room:
 
 class Showtime:
 
-    def __init__(self, showtime_id: str, movie_id: str, start_time: str, room_id: str, room_rows: int, room_cols: int):
+    def __init__(
+        self,
+        showtime_id: str,
+        movie_id: str,
+        start_time: str,
+        room_id: str,
+        room_rows: int,
+        room_cols: int
+    ):
 
         self._showtime_id = showtime_id
-
         self._movie_id = movie_id
-
         self._start_time = start_time
-
         self._room_id = room_id
 
+    # Ma trận ghế chỉ tồn tại trên RAM
         self._seat_matrix = SeatMatrix(
             room_rows,
             room_cols
         )
+  
     
     def get_showtime_id(self):
         return self._showtime_id
