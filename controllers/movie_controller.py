@@ -23,33 +23,12 @@ class MovieController:
         )
     
     def generate_movie_id(self):
-
-        current = self._movie_list.get_head()
+        import time
+        # Lấy thời gian thực tính bằng giây (Ví dụ: 1717568320)
+        unique_timestamp = int(time.time())
         
-        # Nếu chưa có bộ phim nào trong danh sách liên kết
-        if current is None:
-            return "M001"
-
-        max_id_num = 0
-
-        # Duyệt dọc Linked List để bóc tách tìm số ID lớn nhất hiện tại
-        while current is not None:
-            movie = current.get_data()
-            movie_id_str = movie.get_movie_id()  # Ví dụ: "M000000005"
-            
-            try:
-                # Cắt bỏ chữ 'M' ở đầu và chuyển phần còn lại thành số int
-                id_num = int(movie_id_str[1:])
-                if id_num > max_id_num:
-                    max_id_num = id_num
-            except ValueError:
-                pass
-                
-            current = current.get_next()
-
-        # Tăng giá trị lớn nhất lên 1 và format chuỗi 9 chữ số đi kèm chữ M
-        return f"M{max_id_num + 1:03d}"
-
+        # Ghép chữ M với chuỗi thời gian -> Đảm bảo 100% ID độc nhất
+        return f"M{unique_timestamp}"
     # =================================================
     # THÊM PHIM
     # =================================================

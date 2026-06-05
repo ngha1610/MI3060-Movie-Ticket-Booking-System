@@ -441,6 +441,11 @@ class BookingController:
             # Cập nhật trạng thái vé thành CANCELLED
             ticket.set_status("CANCELLED")
             
+            movie_node = self._movie_controller.search_by_id(ticket.get_movie_id())
+            if movie_node is not None:
+                movie = movie_node.get_data()
+                movie.add_revenue(-ticket.get_price()) # Trừ đi giá vé
+                self._io_handler.save_movies(self._movie_controller.get_movie_list()) # Lưu lại file phim
             # Lưu lại danh sách vé vào file CSV
             self._io_handler.save_tickets(self._ticket_list)
             
