@@ -63,14 +63,60 @@ class AdminController:
     # TOP PHIM DOANH THU
     # =================================================
     def get_top_movies_by_revenue(self, limit=10):
-        # Đã sửa: Gọi thuật toán sắp xếp (Bubble Sort) tự code ở tầng Data Structure
-        self._movie_controller.sort_movies_by_revenue()
-        
-        # Sau khi mảng đã được sắp xếp, lấy dữ liệu ra
-        sorted_movies = self._movie_controller.get_movie_data()
 
-        # Trả về số lượng theo limit
-        return sorted_movies[:limit]
+        movie_revenue = {}
+
+        # Khởi tạo doanh thu = 0 cho tất cả phim
+        for movie in self._movie_controller.get_movie_data():
+            movie_revenue[movie.get_movie_id()] = 0
+
+        # Cộng doanh thu từ các vé đã BOOKED
+        current = (
+            self._booking_controller
+            .get_ticket_list()
+            .get_head()
+        )
+
+        while current is not None:
+
+            ticket = current.get_data()
+
+            status = str(
+                ticket.get_status()
+            ).strip().upper()
+
+            if status in [
+                "BOOKED",
+                "2",
+                "SEATSTATUS.BOOKED"
+            ]:
+
+                movie_id = ticket.get_movie_id()
+
+                if movie_id in movie_revenue:
+                    movie_revenue[movie_id] += ticket.get_price()
+
+            current = current.get_next()
+
+        # Gán doanh thu tạm thời cho từng phim
+        movies = self._movie_controller.get_movie_data()
+
+        for movie in movies:
+
+            revenue = movie_revenue.get(
+                movie.get_movie_id(),
+                0
+            )
+
+            movie._revenue = revenue
+
+        # Sắp xếp giảm dần theo doanh thu
+        movies.sort(
+            key=lambda m: m.get_revenue(),
+            reverse=True
+        )
+
+        return movies[:limit]
     # =================================================
     # BÁN VÉ TẠI QUẦY CHO KHÁCH
     # =================================================

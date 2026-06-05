@@ -271,20 +271,10 @@ class ShowtimeController:
             .get_seat_matrix()
         )
 
-        success = (
-            matrix.book_seat(
+        return matrix.book_seat(
                 row,
                 col
             )
-        )
-
-        if success:
-
-            self._io_handler.save_showtimes(
-                self._showtime_list
-            )
-
-        return success
 
     # =================================================
     # RELEASE SEAT
@@ -314,10 +304,6 @@ class ShowtimeController:
         matrix.release_seat(
             row,
             col
-        )
-
-        self._io_handler.save_showtimes(
-            self._showtime_list
         )
 
         return True
@@ -497,6 +483,14 @@ class ShowtimeController:
                     unique_times[j + 1] = temp
                     
         return unique_times
+    
+    # =================================================
+    # LẤY DANH SÁCH SUẤT CHIẾU THEO MÃ PHIM (BỊ THIẾU)
+    # =================================================
+    def get_showtimes_by_movie(self, movie_id: str):
+        """Gọi xuống danh sách liên kết đơn để lọc suất chiếu theo mã phim"""
+        return self._showtime_list.find_by_movie(movie_id)
+    
     # =================================================
     # TÌM SUẤT CHIẾU CHÍNH XÁC THEO NGÀY GIỜ
     # =================================================
