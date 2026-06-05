@@ -6,6 +6,7 @@ class TicketLinkedList:
     def __init__(self):
 
         self._head = None
+        self._tail = None
 
     def add_ticket(self, ticket: TicketData):
 
@@ -14,16 +15,12 @@ class TicketLinkedList:
         if self._head is None:
 
             self._head = new_node
+            self._tail = new_node
 
             return
 
-        current = self._head
-
-        while current.get_next() is not None:
-
-            current = current.get_next()
-
-        current.set_next(new_node)
+        self._tail.set_next(new_node)
+        self._tail = new_node
 
     def find_ticket(self, ticket_id):
 
@@ -63,9 +60,15 @@ class TicketLinkedList:
 
                     self._head = current.get_next()
 
+                    if self._head is None:
+                        self._tail = None
+
                 else:
 
                     prev.set_next(current.get_next())
+
+                    if current == self._tail:
+                        self._tail = prev
 
                 return True
 

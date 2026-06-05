@@ -1,5 +1,9 @@
 import csv
 import json
+import sys
+import ast
+
+csv.field_size_limit(2147483647)
 
 from models.entities import (
     UserData,
@@ -244,10 +248,12 @@ class FileIOHandler:
                 encoding="utf-8"
             ) as f:
                 reader = csv.DictReader(f)
-                
+            
                 for row in reader:
                     # 1. Xác định kích thước ghế theo ID phòng chiếu
-                    room_id = row["room_id"].strip()
+                    # Lấy dữ liệu an toàn, nếu là rỗng (None) thì ép thành chuỗi "" rồi mới strip
+                    room_id_raw = row.get("room_id", "")
+                    room_id = str(room_id_raw).strip() if room_id_raw else "R01" # Gán tạm phòng R01 nếu lỡ thiếu dữ liệu
                     if room_id == "R06":
                         rows, cols = 15, 20
                     else:
@@ -266,15 +272,22 @@ class FileIOHandler:
                     # 3. Đọc dữ liệu ghế đã đặt (nếu file CSV có lưu cột seats_matrix)
                     if "seats_matrix" in row and row["seats_matrix"]:
                         try:
-                            seats_data = json.loads(row["seats_matrix"])
-                            seat_matrix = showtime.get_seat_matrix()
-                            
-                            # Cập nhật lại các ghế đã có người đặt
-                            for r in range(min(rows, len(seats_data))):
-                                for c in range(min(cols, len(seats_data[0]))):
-                                    seat_matrix._seats[r][c] = seats_data[r][c]
-                        except Exception:
-                            # Bỏ qua nếu dữ liệu lỗi, dùng lại ma trận ghế trống mặc định
+                            import ast
+                            raw_data = row["seats_matrix"]
+
+                            seats_data = ast.literal_eval(raw_data)
+
+                            while isinstance(seats_data, str):
+                                seats_data = ast.literal_eval(seats_data)
+
+                            if isinstance(seats_data, list):
+                                seat_matrix = showtime.get_seat_matrix()
+
+                                for r in range(min(rows, len(seats_data))):
+                                    for c in range(min(cols, len(seats_data[0]))):
+                                        seat_matrix._seats[r][c] = seats_data[r][c]
+
+                        except Exception as e:
                             pass
 
                     showtime_list.add_showtime(showtime)
@@ -298,8 +311,7 @@ class FileIOHandler:
                 "showtime_id",
                 "movie_id",
                 "start_time",
-                "room_id",
-                "seats_matrix"
+                "room_id"
             ]
 
             writer = csv.DictWriter(
@@ -312,17 +324,12 @@ class FileIOHandler:
             current = showtime_list.get_head()
             while current is not None:
                 st = current.get_data()
-                seat_matrix = st.get_seat_matrix()
                 
-                # Mã hóa ma trận ghế sang dạng chuỗi JSON để lưu trữ
-                seats_string = json.dumps(seat_matrix._seats)
-
                 writer.writerow({
                     "showtime_id": st.get_showtime_id(),
                     "movie_id": st.get_movie_id(),
                     "start_time": st.get_start_time(),
-                    "room_id": st.get_room_id(),
-                    "seats_matrix": seats_string
+                    "room_id": st.get_room_id()
                 })
 
                 current = current.get_next()
