@@ -1,23 +1,23 @@
 movie_id,title,genre,duration,description,base_price,poster_path
-M001,hihi,Khoa học viễn tưởng / Hành động,190,hahahahaha,95000.0,
-M002,Lật Mặt 8: Vòng Xoáy,Hành động / Tâm lý,120,Mô tả phim Lật Mặt 8: Vòng Xoáy,95000.0,
-M003,Kẻ Ăn Hồn 2,Kinh dị / Cổ trang,115,Mô tả phim Kẻ Ăn Hồn 2,95000.0,
-M004,Sonic the Hedgehog 3,Hoạt hình / Hài hước,105,Mô tả phim Sonic the Hedgehog 3,95000.0,
-M005,Chị Chị Em Em 3,Tâm lý / Giật gân,110,Mô tả phim Chị Chị Em Em 3,95000.0,
-M006,Kraven the Hunter,Hành động / Siêu anh hùng,125,Mô tả phim Kraven the Hunter,95000.0,
-M007,Quỷ Cẩu 2,Kinh dị / Tâm linh,105,Mô tả phim Quỷ Cẩu 2,95000.0,
-M008,Mufasa: The Lion King,Hoạt hình / Phiêu lưu,118,Mô tả phim Mufasa: The Lion King,95000.0,
-M009,Chuyến Tàu Tử Thần,Kinh dị / Sinh tồn,110,Mô tả phim Chuyến Tàu Tử Thần,95000.0,
-M010,Cô Dâu Hào Môn 2,Hài hước / Tâm lý,115,Mô tả phim Cô Dâu Hào Môn 2,95000.0,
-M011,Nhà Bà Nữ 2: Kế Nghiệp,Gia đình / Hài hước,125,Mô tả phim Nhà Bà Nữ 2: Kế Nghiệp,95000.0,
-M012,Cua Lại Vợ Bầu 2,Tình cảm / Hài hước,115,Mô tả phim Cua Lại Vợ Bầu 2,95000.0,
-M013,Captain America: Brave New World,Hành động / Siêu anh hùng,135,Mô tả phim Captain America: Brave New World,95000.0,
-M014,Nụ Hôn Âm Phủ,Kinh dị / Tình cảm,100,Mô tả phim Nụ Hôn Âm Phủ,95000.0,
-M015,Tấm Cám: Chuyện Chưa Kể 2,Cổ trang / Thần thoại,120,Mô tả phim Tấm Cám: Chuyện Chưa Kể 2,95000.0,
-M016,Mai: Ngoại Truyện,Tâm lý / Tình cảm,130,Mô tả phim Mai: Ngoại Truyện,95000.0,
-M017,Paddington in Peru,Gia đình / Hài hước,105,Mô tả phim Paddington in Peru,95000.0,
-M018,The Conjuring: Last Rites,Kinh dị / Siêu nhiên,118,Mô tả phim The Conjuring: Last Rites,95000.0,
-M019,Trạng Tí 2,Hoạt hình / Cuộc phiêu lưu,100,Mô tả phim Trạng Tí 2,95000.0,
+M001,Avatar: Fire and Ash,Khoa học viễn tưởng / Hành động,190,Mô tả phim Avatar: Fire and Ash,95000.0,https://m.media-amazon.com/images/M/MV5BZDYxY2I1OGMtN2Y4MS00ZmU1LTgyNDAtODA0MzAyYjI0N2Y2XkEyXkFqcGc@._V1_.jpg
+M002,Lật Mặt 8: Vòng Tay Nắng ,Hành động / Tâm lý,120,Mô tả phim Lật Mặt 8: Vòng Tay Nắng,95000.0,https://www.bhdstar.vn/wp-content/uploads/2025/04/referenceSchemeHeadOfficeallowPlaceHoldertrueheight700ldapp-7.png
+M003,Kẻ Ăn Hồn 2,Kinh dị / Cổ trang,115,Mô tả phim Kẻ Ăn Hồn 2,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/7/0/70x100-teaser_kah_poster.jpg
+M004,Sonic the Hedgehog 3,Hoạt hình / Hài hước,105,Mô tả phim Sonic the Hedgehog 3,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/s/t/sth3_poster_470x700.jpg
+M005,Chị Chị Em Em 3,Tâm lý / Giật gân,110,Mô tả phim Chị Chị Em Em 3,95000.0,https://touchcinema.com/medias/hinhphim2025/711643345-1416786513823729-2778982691095192386-n-poster.jpg
+M006,Kraven the Hunter,Hành động / Siêu anh hùng,125,Mô tả phim Kraven the Hunter,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/3/5/350x495-kraven.jpg
+M007,Quỷ Cẩu,Kinh dị / Tâm linh,105,Mô tả phim Quỷ Cẩu,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/7/0/700x1000_5__1.jpg
+M008,Mufasa: The Lion King,Hoạt hình / Phiêu lưu,118,Mô tả phim Mufasa: The Lion King,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/3/image/c5f0a1eff4c394a251036189ccddaacd/c/g/cgv_350x495_1_.jpg
+M009,Ga Tử Thần,Kinh dị / Bí ẩn,110,Mô tả phim Ga Tử Thần,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/4/7/470wx700h_2.jpg
+M010,Cô Dâu Hào Môn,Hài hước / Tâm lý,115,Mô tả phim Cô Dâu Hào Môn,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/c/g/cgv_457x590.jpg
+M011,Nhà Bà Nữ,Gia đình / Hài hước,125,Mô tả phim Nhà Bà Nữ,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/n/b/nbn_main-poster_2_1_.jpg
+M012,Cua Lại Vợ Bầu 2,Tình cảm / Hài hước,115,Mô tả phim Cua Lại Vợ Bầu 2,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/1/6/160_12_2.jpg
+M013,Captain America: Brave New World,Hành động / Siêu anh hùng,135,Mô tả phim Captain America: Brave New World,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/c/a/captain_america_th_gi_i_m_i_-_official_poster.jpg
+M014,Nụ Hôn Bạc Tỷ,Kinh dị / Tình cảm,100,Mô tả phim Bạc Tỷ,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/n/_/n_h_n_b_c_t_-_payoff_poster_social_-_kc_m_ng_1_t_t_2025.jpg
+M015,Tấm Cám: Chuyện Chưa Kể,Cổ trang / Thần thoại,120,Mô tả phim Tấm Cám: Chuyện Chưa Kể,95000.0,https://vcdn1-giaitri.vnecdn.net/2016/08/22/poster-phim-tam-cam-ngo-thanh-5750-9241-1471852752.jpg?w=680&h=0&q=100&dpr=2&fit=crop&s=F9At3SBeKxbU1FBWi692MQ
+M016,Mai,Tâm lý / Tình cảm,130,Mô tả phim Mai,95000.0,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVZ8re1QHpEcXIqLjozS7uJp6-NOWlZA6ja-WRfUKuZDTMFxuq54WGuLV4Gy9rhQfw08P7ctgs1TSLY7Qi7BCcWFmx4w_7uqjYremHW_T7&s=10
+M017,Paddington in Peru,Gia đình / Hài hước,105,Mô tả phim Paddington in Peru,95000.0,https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRqGKdOZ71Vc9xxFMdNUzYFF1oBR6rDm7GxnKEqw1IxaqijGT5Snp77a6GrM9h5IUmh3meK5USXoAtqU0hBxgLYCiROW1HDVFDuQRlXXECf&s=10
+M018,The Conjuring: Last Rites,Kinh dị / Siêu nhiên,118,Mô tả phim The Conjuring: Last Rites,95000.0,https://iguov8nhvyobj.vcdn.cloud/media/catalog/product/cache/1/image/c5f0a1eff4c394a251036189ccddaacd/v/n/vn_cjrlr_insta_vert_main_1638x2048_intl.jpg
+M019,Trạng Tí,Hoạt hình / Cuộc phiêu lưu,100,Mô tả phim Trạng Tí,95000.0,https://media.baovanhoa.vn/zoom/1000/Portals/0/thuytrang/wPoster%20Trang-Ti.jpg
 M020,Lỡ Hẹn Với Ngày Xanh,Tình cảm / Lãng mạn,110,Mô tả phim Lỡ Hẹn Với Ngày Xanh,95000.0,
 M021,Quật Mộ Trùng Ma 2 (Exhuma 2),Kinh dị / Bí ẩn,135,Mô tả phim Quật Mộ Trùng Ma 2 (Exhuma 2),95000.0,
 M022,Mickey 17,Khoa học viễn tưởng / Tâm lý,130,Mô tả phim Mickey 17,95000.0,
@@ -57,5 +57,7 @@ M055,Chuyện Ma Gần Nhà 2,Kinh dị / Văn hóa,105,Mô tả phim Chuyện M
 M056,The Fantastic Four: First Steps,Hành động / Siêu anh hùng,135,Mô tả phim The Fantastic Four: First Steps,95000.0,
 M057,Zootopia 2,Hoạt hình / Hài hước,105,Mô tả phim Zootopia 2,95000.0,
 M058,Bông Đẹp Quá Kìa,Giật gân / Sinh tồn,105,Mô tả phim Bông Đẹp Quá Kìa,95000.0,
-M059,Phương Anh Là Mặt Trời Nhỏ,Tình cảm / Lãng mạn,145,Mô tả phim Phương Anh Là Mặt Trời Nhỏ,95000.0,
+M059,Phương Anh Là Mặt Trời Nhỏ,Tình cảm / Lãng mạn,145,Mô tả phim Phương Anh Là Mặt Trời Nhỏ,95000.0,https://i.postimg.cc/3NLQ1HXM/image.png
 M060,Pororo,Khoa học viễn tưởng / Kinh dị,120,Mô tả phim Pororo,95000.0,
+M1780640493,meo meo,kinh dị,120,,85000.0,
+M1780685872,"Trùng sinh, tôi được A+ DSA","Hành động, Tâm lý",180,,2400000,https://i.ibb.co/p630Mw26/fa30c351-98d8-48c6-8cd4-4db1759c63c9.png
