@@ -131,7 +131,7 @@ admin_controller = st.session_state.admin_ctrl
 # 3. CHUYỂN TRANG & POPUP QUẢNG CÁO
 # ==========================================
 # Import hàm phụ trợ giao diện từ file bên ngoài
-from ui_components import navigate_to, show_advertisement, create_premium_movie_card
+from ui_components import navigate_to, show_advertisement, create_premium_movie_card, show_popcorn_effect
 
 # ==========================================
 # 4. CSS DÀNH CHO GIAO DIỆN (VINTAGE STYLE)
@@ -172,22 +172,49 @@ st.markdown("""
     .movie-title { font-size: 1.1rem !important; font-weight: 900 !important; color: #5C161B !important; text-transform: uppercase; margin-bottom: 10px !important; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.8rem;}
     .movie-info-text { font-size: 0.85rem; color: #555; margin: 0 0 5px 0; border-bottom: 1px dotted #CCC; padding-bottom: 5px;}
     .seat-screen { background: #5C161B; text-align: center; color: #D4AF37; font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; padding: 10px; border-radius: 4px; margin-bottom: 30px; letter-spacing: 8px; border: 2px double #D4AF37; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);}
-/* --- VŨ KHÍ HỦY DIỆT: ÉP PHÔNG CHỮ NHỎ LẠI VÀ XÓA LỀ --- */
+/* --- VŨ KHÍ HỦY DIỆT (ĐÃ NÂNG CẤP): ĐỒNG BỘ KÍCH THƯỚC & MÀU SẮC GHẾ --- */
     
-    /* Ép tất cả các nút phụ (ghế) phải mỏng dính */
-    button[kind="secondary"] {
+    /* Ép tất cả các nút (cả trống, đang chọn, và đã bán) chung 1 form kích thước */
+    .stButton > button {
         padding: 0px !important;
-        min-height: 35px !important;
+        min-height: 38px !important;
+        border-radius: 4px;
+        transition: all 0.2s ease-in-out;
     }
     
-    /* Xuyên thủng vào lớp thẻ <p> bên trong nút */
-    button[kind="secondary"] p {
+    /* Xuyên thủng vào lớp thẻ <p> bên trong nút để chữ không bị tràn */
+    .stButton > button p {
         white-space: nowrap !important;
         word-break: keep-all !important;
-        font-size: 0.65rem !important; /* Thu nhỏ cỡ chữ mức tối đa để vừa cột */
-        letter-spacing: -0.5px !important; /* Kéo các chữ cái sát lại nhau */
+        font-size: 0.75rem !important; 
+        letter-spacing: -0.5px !important; 
         margin: 0 !important;
     }   
+
+    /* 1. GHẾ TRỐNG (Secondary) */
+    .stButton > button[kind="secondary"] {
+        background-color: #E8DCC4; 
+        color: #5C161B !important; 
+        border: 1px solid #B89947;
+    }
+
+    /* 2. GHẾ ĐANG CHỌN (Primary) - Bỏ hiệu ứng bóng đổ và di chuyển để không bị giật khung */
+    .stButton > button[kind="primary"] {
+        background-color: #5C161B !important; 
+        color: #D4AF37 !important; 
+        border: 2px solid #D4AF37 !important;
+        box-shadow: none !important; 
+        transform: none !important;
+    }
+
+    /* 3. GHẾ ĐÃ BÁN (Disabled) - Chuyển sang màu Xám lạnh */
+    .stButton > button:disabled {
+        background-color: #9E9E9E !important; 
+        color: #E0E0E0 !important; 
+        border: 1px solid #757575 !important; 
+        cursor: not-allowed !important; 
+        opacity: 0.8 !important;
+    } 
 
 </style>
 """, unsafe_allow_html=True)
@@ -232,6 +259,7 @@ with st.sidebar:
                             st.error("Thông tin không chính xác!")
         with tab_register:
             with st.form("register_form"):
+                st.markdown("<small>*(Lưu ý: Mật khẩu phải chứa ít nhất 6 ký tự)*</small>", unsafe_allow_html=True)
                 new_username = st.text_input("Tên người dùng mới")
                 new_password = st.text_input("Mật khẩu", type="password")
                 confirm_password = st.text_input("Xác nhận mật khẩu", type="password")
@@ -731,11 +759,8 @@ try:
     # B. GIAO DIỆN KHÁCH HÀNG - TRANG CHỦ
     # ------------------------------------------
     elif st.session_state.current_page == 'home':
-        if st.session_state.get('booking_success', False):
-            st.success("🎉 Giao dịch thành công! Chúc quý khách xem phim vui vẻ.")
-            st.balloons()
-            st.session_state.booking_success = False # Tắt cờ hiệu để không bị bắn lại khi F5
-        # 1. LẤY DỮ LIỆU TỪ KHO PHIM VÀ CẤU HÌNH ADMIN
+        
+         # 1. LẤY DỮ LIỆU TỪ KHO PHIM VÀ CẤU HÌNH ADMIN
         all_movies = movie_controller.get_movie_data()
         
         # Kiểm tra an toàn nếu cấu hình admin chưa được khởi tạo
@@ -913,18 +938,23 @@ try:
                         st.selectbox("3. Khung Giờ", ["-- Chọn giờ --"], key="cust_time_sel_2_empty2")
 
             # ==========================================
-            # NÚT XUẤT VÉ
+            # NÚT XUẤT VÉ (ĐÃ SỬA: ÉP CHỌN ĐỦ NGÀY GIỜ VÀ LƯU LẠI DỮ LIỆU)
             # ==========================================
             with qb4: 
                 st.markdown("<div style='margin-top: 28px;'></div>", unsafe_allow_html=True)
                 if st.button("XUẤT VÉ", type="primary", use_container_width=True, key="cust_btn_book"):
                     if not st.session_state.is_logged_in:
                         st.error("Xuất trình thẻ thành viên (Đăng nhập)!")
-                    elif not selected_fast_movie or selected_fast_movie == "-- Chọn phim --":
-                        st.warning("Vui lòng chọn phim và lịch chiếu hoàn chỉnh!")
-                    elif selected_fast_movie == "Hiện chưa có phim":
-                        st.error("Rạp đang bảo trì phim!")
+                    elif not selected_fast_movie or selected_fast_movie in ["-- Chọn phim --", "Hiện chưa có phim"]:
+                        st.warning("Vui lòng chọn phim!")
+                    elif selected_date in ["-- Chọn ngày --", "Chưa có lịch", None]:
+                        st.warning("Vui lòng chọn ngày chiếu!")
+                    elif selected_time in ["-- Chọn giờ --", "Chưa có giờ", None]:
+                        st.warning("Vui lòng chọn khung giờ chiếu!")
                     else:
+                        # 👇 Lưu Ngày & Giờ khách vừa chọn vào bộ nhớ tạm để sang phòng vé lôi ra dùng
+                        st.session_state.target_date = selected_date
+                        st.session_state.target_time = selected_time
                         navigate_to("booking", selected_fast_movie)
                         
             st.markdown('</div>', unsafe_allow_html=True)
@@ -963,9 +993,15 @@ try:
     elif st.session_state.current_page == 'booking':
         if st.button("TRỞ VỀ SẢNH CHÍNH", type="secondary"): navigate_to("home")
         
+        # 👇 THÊM ĐOẠN NÀY VÀO ĐỂ BẮN HIỆU ỨNG KHI MUA XONG
+        if st.session_state.get('booking_success', False):
+            st.success("🎉 Giao dịch thành công! Chúc quý khách xem phim vui vẻ.")
+            show_popcorn_effect()
+            st.session_state.booking_success = False # Tắt cờ đi để F5 không bị bắn lại
+
         selected_movie_title = st.session_state.selected_movie
         st.markdown(f"<h2 style='color:#5C161B;'>XUẤT VÉ: {selected_movie_title}</h2>", unsafe_allow_html=True)
-        
+   
         # Tìm phim tương ứng
         movie_node = movie_controller.search_by_title(selected_movie_title)
         if movie_node is None:
@@ -973,9 +1009,20 @@ try:
         else:
             m_data = movie_node.get_data()
             
-            # Tìm lịch chiếu (Lấy lịch chiếu đầu tiên khớp với movie_id)
-            showtimes = showtime_controller.get_showtime_data()
-            st_data = next((s for s in showtimes if s.get_movie_id() == m_data.get_movie_id()), None)
+            # --- ĐÃ SỬA: LẤY CHÍNH XÁC SUẤT CHIẾU THEO NGÀY GIỜ Ở SẢNH ---
+            target_date = st.session_state.get('target_date')
+            target_time = st.session_state.get('target_time')
+            
+            st_data = None
+            if target_date and target_time:
+                # Gọi hàm tìm chính xác suất chiếu
+                st_data = showtime_controller.find_exact_showtime(
+                    m_data.get_movie_id(), target_date, target_time
+                )
+            else:
+                # Đề phòng lỗi (khách F5 mất session), lôi tạm lịch đầu tiên ra
+                showtimes = showtime_controller.get_showtime_data()
+                st_data = next((s for s in showtimes if s.get_movie_id() == m_data.get_movie_id()), None)
             
             if st_data is None:
                 st.warning("Rạp chưa mở khung giờ chiếu nào cho tác phẩm này. Vui lòng quay lại sau!")
@@ -987,7 +1034,6 @@ try:
                     if st.button("Cập nhật ghế mới", use_container_width=True, key="sync_seats_btn"):
                         booking_controller.refresh_booking_data()
                         st.rerun()
-                
                 
                 st.markdown('<div class="seat-screen">MÀN CHIẾU</div>', unsafe_allow_html=True)
                 st.write("")
@@ -1002,21 +1048,34 @@ try:
                     row_char = chr(65 + r)
                     for c in range(cols):
                         seat_name = f"{row_char}{c+1}"
-                        # Check status (0 là EMPTY theo Entities)
-                        is_booked = (seat_matrix.check_status(r, c) != SeatStatus.EMPTY)
+                        
+                        # ==========================================
+                        # LOGIC ĐỔI MÀU GHẾ MỚI CỦA M NẰM Ở ĐÂY
+                        # ==========================================
+                        status = seat_matrix.check_status(r, c)
+                        is_selected = seat_name in st.session_state.selected_seats
+                        
+                        # Ghế BỊ XÁM khi: Đã mua (BOOKED) HOẶC Đang bị NGƯỜI KHÁC giữ chỗ (RESERVED)
+                        is_unavailable = (status == SeatStatus.BOOKED) or (status == SeatStatus.RESERVED and not is_selected)
                         
                         with cols_st[c]:
-                            if is_booked:
+                            if is_unavailable:
                                 st.button(seat_name, key=f"seat_{seat_name}", disabled=True, use_container_width=True)
                             else:
-                                is_selected = seat_name in st.session_state.selected_seats
                                 btn_type = "primary" if is_selected else "secondary"
+                                # Không gán disabled lúc đang thanh toán để ghế không bị chuyển xám oan uổng
                                 if st.button(seat_name, key=f"seat_{seat_name}", type=btn_type, use_container_width=True):
-                                    if is_selected: st.session_state.selected_seats.remove(seat_name)
-                                    else: st.session_state.selected_seats.append(seat_name)
-                                    st.rerun() 
+                                    
+                                    if st.session_state.get('payment_step', False):
+                                        # Bật khiên cấm đổi ghế lúc đang có mã QR
+                                        st.toast("Đang trong quá trình thanh toán, không thể đổi ghế!", icon="⚠️")
+                                    else:
+                                        if is_selected: st.session_state.selected_seats.remove(seat_name)
+                                        else: st.session_state.selected_seats.append(seat_name)
+                                        st.rerun() 
                                     
                 st.divider()
+
                 num_selected = len(st.session_state.selected_seats)
                 base_price = m_data.get_base_price()
                 total_price = num_selected * base_price
@@ -1132,7 +1191,7 @@ try:
                                     st.session_state.generated_ticket_ids = []
                                     st.session_state.payment_step = False
                                     
-                                    st.session_state.current_page = 'home'
+                                    booking_controller.refresh_booking_data()
                                     st.rerun()
                     
                     else:
