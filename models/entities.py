@@ -203,6 +203,8 @@ class MovieData:
         if amount > 0:
             self._revenue += amount
 
+from data_structures.array import Array2D
+
 class SeatMatrix:
 
     def __init__(self, rows: int, cols: int):
@@ -213,10 +215,8 @@ class SeatMatrix:
         self._rows = rows
         self._cols = cols
 
-        self._seats = [
-            [SeatStatus.EMPTY for _ in range(cols)]
-            for _ in range(rows)
-        ]
+        from models.entities import SeatStatus
+        self._seats = Array2D(rows, cols, SeatStatus.EMPTY)
 
     def get_rows(self):
         return self._rows
@@ -229,73 +229,67 @@ class SeatMatrix:
         return f"{chr(65 + r)}{c + 1}"
 
     def check_status(self, r: int, c: int) -> int:
-
         if 0 <= r < self._rows and 0 <= c < self._cols:
-            return self._seats[r][c]
-
+            return self._seats.get_val(r, c) 
+        from models.entities import SeatStatus
         return SeatStatus.BLOCKED
 
     def reserve_seat(self, r: int, c: int) -> bool:
-
+        from models.entities import SeatStatus
         if (
             0 <= r < self._rows
             and 0 <= c < self._cols
-            and self._seats[r][c] == SeatStatus.EMPTY
+            and self._seats.get_val(r, c) == SeatStatus.EMPTY
         ):
-
-            self._seats[r][c] = SeatStatus.RESERVED
+            self._seats.set_val(r, c, SeatStatus.RESERVED) 
             return True
-
         return False
 
-
     def book_seat(self, r: int, c: int) -> bool:
-
+        from models.entities import SeatStatus
         if (
             0 <= r < self._rows
             and 0 <= c < self._cols
             and (
-                self._seats[r][c] == SeatStatus.EMPTY
-                or self._seats[r][c] == SeatStatus.RESERVED
+                self._seats.get_val(r, c) == SeatStatus.EMPTY
+                or self._seats.get_val(r, c) == SeatStatus.RESERVED
             )
         ):
-
-            self._seats[r][c] = SeatStatus.BOOKED
+            self._seats.set_val(r, c, SeatStatus.BOOKED) 
             return True
-
         return False
 
     def release_seat(self, r, c):
-
-        if (
-            0 <= r < self._rows
-            and
-            0 <= c < self._cols
-        ):
-
-            self._seats[r][c] = SeatStatus.EMPTY
+        from models.entities import SeatStatus
+        if 0 <= r < self._rows and 0 <= c < self._cols:
+            self._seats.set_val(r, c, SeatStatus.EMPTY) 
 
     def get_seats(self):
         return self._seats
 
-    def load_matrix(self, seats):
-
-        self._seats = seats
-
-        self._rows = len(seats)
-
-        self._cols = (
-           len(seats[0])
-           if seats else 0
-        )
+    def load_matrix(self, seats_array):
+        self._rows = len(seats_array)
+        self._cols = len(seats_array[0]) if seats_array else 0
         
-    # Cần truyền tọa độ r, c để set đúng ghế đó
+        # Khởi tạo bằng tên class mới
+        self._seats = Array2D(self._rows, self._cols)
+        
+        r = 0
+        for row in seats_array:
+            c = 0
+            for val in row:
+                self._seats.set_val(r, c, val)
+                c += 1
+            r += 1
+
     def set_seat_status(self, r: int, c: int, status: int):
         if 0 <= r < self._rows and 0 <= c < self._cols:
-           self._seats[r][c] = status
+           self._seats.set_val(r, c, status) 
            return True
         return False
-
+    
+    
+      
 
 class Room:
 
