@@ -110,13 +110,13 @@ class AdminController:
 
             movie._revenue = revenue
 
-        # Sắp xếp giảm dần theo doanh thu
-        movies.sort(
-            key=lambda m: m.get_revenue(),
-            reverse=True
-        )
+        # Gọi hàm sắp xếp Bubble Sort đã code tay trong danh sách liên kết
+        self._movie_controller.get_movie_list().sort_by_revenue_logic()
 
-        return movies[:limit]
+        # Sau đó mới lấy dữ liệu đã được sắp xếp ra
+        sorted_movies = self._movie_controller.get_movie_data()
+        return sorted_movies[:limit]
+
     # =================================================
     # BÁN VÉ TẠI QUẦY CHO KHÁCH
     # =================================================
