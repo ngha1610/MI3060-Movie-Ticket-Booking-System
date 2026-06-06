@@ -548,13 +548,39 @@ try:
                 new_list = st.multiselect("Chọn phim xuất hiện ở Danh sách Tác Phẩm (Tối đa 8):", options=all_titles, default=st.session_state.config_list if st.session_state.config_list else all_titles[:8])
                 
                 if st.form_submit_button("LƯU CẤU HÌNH HIỂN THỊ", type="primary"):
-                    if len(new_slider) > 3:
+                    # Đếm thủ công
+                    count_slider = 0
+                    for item in new_slider:
+                        count_slider += 1
+                    
+                    count_list = 0
+                    for item in new_list:
+                        count_list +=1
+
+                    # Kiểm tra điều kiện
+                    if count_slider > 3:
                         st.error("Bảng trượt chỉ chứa được tối đa 3 tác phẩm!")
-                    elif len(new_list) > 8:
+                    elif count_list > 8:
                         st.error("Danh sách bên dưới chỉ chứa được tối đa 8 tác phẩm!")
                     else:
                         st.session_state.config_slider = new_slider
                         st.session_state.config_list = new_list
+
+                        # Ghi dữ liệu
+                        try:
+                            with open("data/ui_config.csv", "w", encoding="utf-8") as f:
+                                slider_row = "SLIDER"
+                                for item in new_slider:
+                                    slider_row += "|" + item
+                                f.write(slider_row + "\n")
+
+                                list_row = "LIST"
+                                for item in new_list:
+                                    list_row += "|" + item
+                                f.write(list_row + "\n")
+                        except Exception as e:
+                            st.error(f"Lỗi ghi cấu hình: {e}")
+
                         st.success("Đã lưu cấu hình! Bạn có thể về Sảnh Chính để xem thay đổi.")
         # TAB 3: TOP DOANH THU
         with tab_top: 
@@ -763,16 +789,83 @@ try:
          # 1. LẤY DỮ LIỆU TỪ KHO PHIM VÀ CẤU HÌNH ADMIN
         all_movies = movie_controller.get_movie_data()
         
-        # Kiểm tra an toàn nếu cấu hình admin chưa được khởi tạo
-        if 'config_slider' not in st.session_state: st.session_state.config_slider = []
-        if 'config_list' not in st.session_state: st.session_state.config_list = []
+# Đọc cấu hình từ file CSV
+        st.session_state.config_slider = []
+        st.session_state.config_list = []
+        try:
+            with open("data/ui_config.csv", "r", encoding="utf-8") as f:
+                for line in f:
+                    clean_line = ""
+                    for char in line:
+                        if char != '\n': clean_line += char
+                    
+                    # Tự code vòng lặp tách chuỗi bằng dấu phẩy
+                    parts = []
+                    temp_str = ""
+                    for char in clean_line:
+                        if char == "|":
+                            parts.append(temp_str)
+                            temp_str = ""
+                        else:
+                            temp_str += char
+                    parts.append(temp_str)
+                    
+                    # Đếm mảng thủ công
+                    count_parts = 0
+                    for p in parts: count_parts += 1
+
+                    if count_parts > 0:
+                        if parts[0] == "SLIDER":
+                            idx = 1
+                            while idx < count_parts:
+                                st.session_state.config_slider.append(parts[idx])
+                                idx += 1
+                        elif parts[0] == "LIST":
+                            idx = 1
+                            while idx < count_parts:
+                                st.session_state.config_list.append(parts[idx])
+                                idx += 1
+        except FileNotFoundError:
+            pass 
+
+        # --- LỌC PHIM (THAY CHO LIST COMPREHENSION VÀ SLICING) ---
+        slider_movies = []
+        display_movies = []
         
-        # Lọc phim theo đúng danh sách Admin đã chọn. Nếu Admin chưa chọn gì, lấy mặc định vài phim đầu tiên.
-        slider_movies = [m for m in all_movies if m.get_title() in st.session_state.config_slider]
-        if not slider_movies and all_movies: slider_movies = all_movies[:3]
+        if all_movies:
+            # Lọc phim cho Slider
+            for m in all_movies:
+                for title in st.session_state.config_slider:
+                    if m.get_title() == title:
+                        slider_movies.append(m)
+                        break
             
-        display_movies = [m for m in all_movies if m.get_title() in st.session_state.config_list]
-        if not display_movies and all_movies: display_movies = all_movies[:8]
+            # Lọc phim cho Danh sách hiển thị
+            for m in all_movies:
+                for title in st.session_state.config_list:
+                    if m.get_title() == title:
+                        display_movies.append(m)
+                        break
+
+            # Nếu danh sách Slider rỗng (chưa cấu hình), lấy tay 3 phim đầu tiên
+            count_slider = 0
+            for _ in slider_movies: count_slider += 1
+            if count_slider == 0:
+                count_all = 0
+                for m in all_movies:
+                    if count_all < 3:
+                        slider_movies.append(m)
+                    count_all += 1
+                    
+            # Nếu danh sách Hiển thị rỗng (chưa cấu hình), lấy tay 8 phim đầu tiên
+            count_display = 0
+            for _ in display_movies: count_display += 1
+            if count_display == 0:
+                count_all = 0
+                for m in all_movies:
+                    if count_all < 8:
+                        display_movies.append(m)
+                    count_all += 1
 
         # --- 2. TÍNH NĂNG MỚI: SLIDER ĐỘNG HOÀN TOÀN ---
         st.markdown("<h2 style='text-align: center; color: #5C161B; margin-bottom: 20px; z-index:10; position:relative;'>— TÂM ĐIỂM TUẦN NÀY —</h2>", unsafe_allow_html=True)
@@ -782,7 +875,8 @@ try:
         else:
             # Tạo chuỗi HTML chứa nội dung các slide động
             slides_html_content = ""
-            for i, m in enumerate(slider_movies):
+            i = 0
+            for m in slider_movies:
                 active_class = "active" if i == 0 else "" # Slide đầu tiên luôn hiển thị
                 img_url = m.get_poster_path() if m.get_poster_path() else "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=1000&q=80"
                 desc = m.get_description() if m.get_description() else "Siêu phẩm điện ảnh kinh điển không thể bỏ lỡ tại Sunnyx Vintage Cinema."
@@ -967,9 +1061,14 @@ try:
         if not display_movies:
             st.info("Hiện hệ thống chưa thiết lập phim hiển thị tại sảnh. Vui lòng liên hệ Admin.")
         else:
+            # Đếm tổng số phim hiển thị
+            total_display = 0
+            for _ in display_movies:
+                total_display += 1
             # Load phim từ danh sách display_movies do Admin cấu hình (chia làm các hàng 4 cột)
             cols = st.columns(4)
-            for i, movie in enumerate(display_movies):
+            i = 0
+            for movie in display_movies:
                 col = cols[i % 4]
                 create_premium_movie_card(
                     col, 
@@ -981,10 +1080,10 @@ try:
                 )
                 
                 # Xuống dòng sau mỗi 4 phim
-                if (i + 1) % 4 == 0 and i != (len(display_movies) - 1):
+                if (i + 1) % 4 == 0 and i != (total_display - 1):
                     st.write("") 
                     cols = st.columns(4)
-
+                i += 1
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ------------------------------------------
@@ -1076,13 +1175,26 @@ try:
                                     
                 st.divider()
 
-                num_selected = len(st.session_state.selected_seats)
+                # 1. Đếm số ghế (Thay cho len)
+                num_selected = 0
+                for _ in st.session_state.selected_seats:
+                    num_selected += 1
+                    
                 base_price = m_data.get_base_price()
                 total_price = num_selected * base_price
                 
+                # 2. Nối chuỗi tên ghế (Thay cho .join)
+                seats_str = ""
+                idx = 0
+                for s in st.session_state.selected_seats:
+                    seats_str += s
+                    if idx < num_selected - 1:
+                        seats_str += ", "
+                    idx += 1
+                
                 col_sum1, col_sum2 = st.columns([3, 1])
                 with col_sum1:
-                    st.markdown(f"**Vị trí đã chọn:** {', '.join(st.session_state.selected_seats) if num_selected > 0 else 'Chưa chọn'}")
+                    st.markdown(f"**Vị trí đã chọn:** {seats_str if num_selected > 0 else 'Chưa chọn'}")
                     st.markdown(f"**Tổng Lệ phí:** <span style='color:#5C161B; font-size: 1.2rem; font-weight:bold;'>{total_price:,.0f} VNĐ</span>", unsafe_allow_html=True)
                 
                 # --- KHỞI TẠO BIẾN TRẠNG THÁI THANH TOÁN ---
