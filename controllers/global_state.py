@@ -7,7 +7,9 @@ from controllers.showtime_controller import ShowtimeController
 from controllers.room_controller import RoomController
 from controllers.admin_controller import AdminController
 
-# Dùng cache_resource để khóa các controller vào RAM vĩnh viễn
+# Thêm decorator để khóa các controller vào RAM vĩnh viễn,
+# tránh việc hệ thống bị khởi tạo lại từ đầu mỗi khi Streamlit rerun.
+@st.cache_resource
 def init_global_system():
     print("=== BẮT ĐẦU KHỞI CHẠY HỆ THỐNG RIÊNG BIỆT ===")
     io_handler = FileIOHandler()
@@ -32,6 +34,3 @@ def init_global_system():
     
     print("=== KHỞI TẠO TẤT CẢ CONTROLLER THÀNH CÔNG! ===")
     return auth_ctrl, movie_ctrl, showtime_ctrl, room_ctrl, booking_ctrl, admin_ctrl
-
-# Ở file app.py, khi muốn dùng dữ liệu, cậu chỉ cần gọi:
-# auth_ctrl, movie_ctrl, showtime_ctrl, room_ctrl, booking_ctrl, admin_ctrl = init_global_system()

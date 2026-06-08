@@ -36,14 +36,20 @@ class ShowtimeController:
         while current is not None:
             st_id = current.get_data().get_showtime_id()
             try:
-                num = int(st_id[1:])
+                num_str = ""
+                idx = 0
+                for char in st_id:
+                    if idx > 0: 
+                        num_str += char
+                    idx += 1
+                    
+                num = int(num_str)
                 if num > max_id: 
                     max_id = num
             except ValueError: 
                 pass
             current = current.get_next()
             
-        # Đưa return ra ngoài thẳng hàng với lệnh while
         return f"S{max_id + 1:09d}"
         
     # =================================================
@@ -331,9 +337,7 @@ class ShowtimeController:
 
         while current is not None:
 
-            result.append(
-                current.get_data()
-            )
+            result += [current.get_data()]
 
             current = (
                 current.get_next()
@@ -384,7 +388,7 @@ class ShowtimeController:
                 
                 # Nhét suất chiếu vào danh sách của phim tương ứng
                 if movie_id in daily_schedule:
-                    daily_schedule[movie_id]["showtimes"].append(st)
+                    daily_schedule[movie_id]["showtimes"] += [st]
                     
             current = current.get_next()
             
@@ -396,35 +400,22 @@ class ShowtimeController:
     def extract_date(self, showtime):
         """Tách lấy ngày từ object Showtime"""
         start = str(showtime.get_start_time())
-        return start.split()[0] if " " in start else start
-
-    def extract_time(self, showtime):
-        """Tách lấy giờ từ object Showtime"""
-        start = str(showtime.get_start_time())
-        return start.split()[1] if " " in start else ""
-    # =================================================
-    # HÀM HỖ TRỢ XỬ LÝ CHUỖI & MẢNG (CODE TAY 100%)
-    # =================================================
-    
-    def extract_date(self, showtime):
-        """Tách ngày bằng vòng lặp, duyệt đến khi gặp khoảng trắng thì dừng"""
-        start = str(showtime.get_start_time())
         date_str = ""
         for char in start:
-            if char == " ":
+            if char == " ":  # Gặp khoảng trắng thì dừng (chỉ lấy phần trước khoảng trắng)
                 break
             date_str += char
         return date_str
 
     def extract_time(self, showtime):
-        """Tách giờ bằng vòng lặp, lấy các ký tự sau khoảng trắng"""
+        """Tách lấy giờ từ object Showtime"""
         start = str(showtime.get_start_time())
         time_str = ""
         found_space = False
         for char in start:
             if found_space:
                 time_str += char
-            elif char == " ":
+            elif char == " ": # Bắt đầu lấy ký tự từ sau khoảng trắng
                 found_space = True
         return time_str
 
@@ -433,7 +424,7 @@ class ShowtimeController:
         # 1. Lấy tất cả các ngày
         raw_dates = []
         for s in showtimes_list:
-            raw_dates.append(self.extract_date(s))
+            raw_dates += [self.extract_date(s)]
             
         # 2. Lọc trùng (Thay cho set)
         unique_dates = []
@@ -444,7 +435,7 @@ class ShowtimeController:
                     is_duplicate = True
                     break
             if not is_duplicate and d != "":
-                unique_dates.append(d)
+                unique_dates += [d]
                 
         # 3. Thuật toán sắp xếp nổi bọt (Thay cho sorted)
         n = len(unique_dates)
@@ -462,7 +453,7 @@ class ShowtimeController:
         """Lọc trùng và Sắp xếp mảng Giờ (Bubble Sort)"""
         raw_times = []
         for s in showtimes_list:
-            raw_times.append(self.extract_time(s))
+            raw_times += [self.extract_time(s)]
             
         unique_times = []
         for t in raw_times:
@@ -472,7 +463,7 @@ class ShowtimeController:
                     is_duplicate = True
                     break
             if not is_duplicate and t != "":
-                unique_times.append(t)
+                unique_times += [t]
                 
         n = len(unique_times)
         for i in range(n):

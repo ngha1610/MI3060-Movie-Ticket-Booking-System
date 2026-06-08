@@ -181,22 +181,13 @@ class MovieController:
 
         while current is not None:
 
-            result.append(
-                current.get_data()
-            )
+            result += [current.get_data()]
 
             current = (
                 current.get_next()
             )
 
         return result
-
-    # =================================================
-    # SẮP XẾP DOANH THU
-    # =================================================
-
-    def sort_movies_by_revenue(self):
-        pass
 
     # =================================================
     # KIỂM TRA TỒN TẠI
@@ -217,5 +208,16 @@ class MovieController:
         """Cho phép các controller khác yêu cầu lưu file phim"""
         self._io_handler.save_movies(self._movie_list)
 
+    # =================================================
+    # QUẢN LÝ CẤU HÌNH GIAO DIỆN
+    # =================================================
+
+    def load_ui_config(self):
+        """Gọi xuống tầng IO để tải cấu hình hiển thị sảnh chính"""
+        return self._io_handler.load_ui_config()
+        
+    def save_ui_config(self, slider_titles, list_titles):
+        """Gọi xuống tầng IO để lưu cấu hình hiển thị sảnh chính"""
+        self._io_handler.save_ui_config(slider_titles, list_titles)
 
 

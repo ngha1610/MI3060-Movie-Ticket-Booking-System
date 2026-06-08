@@ -33,11 +33,8 @@ class AdminController:
 
         while current is not None:
             ticket = current.get_data()
-            
-            # Ép kiểu status về chuỗi in hoa để tránh lỗi so sánh (Int vs String)
             status = str(ticket.get_status()).strip().upper()
             
-            # Chấp nhận cả chữ BOOKED hoặc số 2
             if status in ["BOOKED", "2", "SEATSTATUS.BOOKED"]:
                 revenue += ticket.get_price()
 
@@ -49,26 +46,38 @@ class AdminController:
     # ĐẾM PHIM
     # =================================================
     def count_movies(self):
-        # Đã sửa: Đếm trực tiếp trên mảng trả về
-        return len(self._movie_controller.get_movie_data())
+        count = 0
+        current = self._movie_controller.get_movie_list().get_head()
+        
+        while current is not None:
+            count += 1
+            current = current.get_next()
+            
+        return count
 
     # =================================================
     # ĐẾM VÉ
     # =================================================
     def count_tickets(self):
-        # Đã sửa: Đếm trực tiếp trên mảng trả về
-        return len(self._booking_controller.get_ticket_data())
+        count = 0
+        current = self._booking_controller.get_ticket_list().get_head()
+        
+        while current is not None:
+            count += 1
+            current = current.get_next()
+            
+        return count
 
     # =================================================
     # TOP PHIM DOANH THU
     # =================================================
     def get_top_movies_by_revenue(self, limit=10):
 
-        movie_revenue = {}
+        movie_revenue = []
 
         # Khởi tạo doanh thu = 0 cho tất cả phim
         for movie in self._movie_controller.get_movie_data():
-            movie_revenue[movie.get_movie_id()] = 0
+            movie_revenue += [[movie.get_movie_id(), 0]]
 
         # Cộng doanh thu từ các vé đã BOOKED
         current = (
@@ -93,8 +102,11 @@ class AdminController:
 
                 movie_id = ticket.get_movie_id()
 
-                if movie_id in movie_revenue:
-                    movie_revenue[movie_id] += ticket.get_price()
+                # Duyệt tuần tự qua mảng cặp để cập nhật doanh thu
+                for pair in movie_revenue:
+                    if pair[0] == movie_id:
+                        pair[1] += ticket.get_price()
+                        break
 
             current = current.get_next()
 
@@ -103,19 +115,30 @@ class AdminController:
 
         for movie in movies:
 
-            revenue = movie_revenue.get(
-                movie.get_movie_id(),
-                0
-            )
-
-            movie._revenue = revenue
+            revenue = 0
+            # Tìm kiếm tuần tự mã phim để lấy ra doanh thu tổng tương ứng
+            for pair in movie_revenue:
+                if pair[0] == movie.get_movie_id():
+                    revenue = pair[1]
+                    break
+            movie.set_revenue(revenue)
 
         # Gọi hàm sắp xếp Bubble Sort đã code tay trong danh sách liên kết
         self._movie_controller.get_movie_list().sort_by_revenue_logic()
 
         # Sau đó mới lấy dữ liệu đã được sắp xếp ra
         sorted_movies = self._movie_controller.get_movie_data()
-        return sorted_movies[:limit]
+        
+        top_movies = []
+        count = 0
+
+        for movie in sorted_movies:
+            if count >= limit:
+                break
+            top_movies += [movie]
+            count += 1
+
+        return top_movies
 
     # =================================================
     # BÁN VÉ TẠI QUẦY CHO KHÁCH
@@ -162,6 +185,6 @@ class AdminController:
         for t in all_tickets:
             status = str(t.get_status()).strip().upper()
             if status in ["BOOKED", "2", "SEATSTATUS.BOOKED"]:
-                active_tickets.append(t)
+                active_tickets += [t]
                 
         return active_tickets

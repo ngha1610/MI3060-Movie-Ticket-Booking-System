@@ -13,7 +13,7 @@ from data_structures.file_io import (
 )
 
 # =====================================================
-# AUTH CONTROLLER
+# AUTH CONTROLLER: BỘ ĐIỀU KHIỂN XÁC THỰC NGƯỜI DÙNG
 # =====================================================
 _auth_lock = threading.Lock()
 
@@ -23,198 +23,113 @@ class AuthController:
         self,
         io_handler: FileIOHandler
     ):
-
         self._io_handler = io_handler
-
-        self._user_table = (
-            UserHashTable()
-        )
-
-        self._io_handler.load_users(
-            self._user_table
-        )
-
+        self._user_table = UserHashTable()
+        self._io_handler.load_users(self._user_table)
         self._current_user = None
 
     # =================================================
-    # TẠO USER ID (ĐÃ SỬA: CHỐNG TRÙNG MÃ KHI XÓA)
+    # TẠO USER ID: DUYỆT BẢNG BĂM ĐỂ TÌM ID LỚN NHẤT
     # =================================================
-
     def _generate_user_id(self):
-
         all_users = self._user_table.get_all()
         
-        # Nếu hệ thống chưa có user nào, cấp mã đầu tiên
         if not all_users:
             return "U000000001"
 
         max_id_num = 0
         for user in all_users:
-            user_id_str = user.get_user_id()  # Định dạng dạng "U000000005"
+            user_id_str = user.get_user_id() 
             try:
-                # Cắt bỏ chữ 'U' ở đầu và chuyển phần còn lại thành số int
-                id_num = int(user_id_str[1:])
+                # Cắt chuỗi loại bỏ ký tự 'U' ở đầu
+                id_str = ""
+                idx = 0
+                for char in user_id_str:
+                    if idx > 0: id_str += char
+                    idx += 1
+                
+                id_num = int(id_str)
                 if id_num > max_id_num:
                     max_id_num = id_num
             except ValueError:
                 continue
 
-        # Tăng giá trị số lớn nhất lên 1 và format lại chuỗi 9 chữ số
         return f"U{max_id_num + 1:09d}"
 
     # =================================================
     # ĐĂNG NHẬP
     # =================================================
+    def login(self, username: str, password: str) -> str:
+        # Chuẩn hóa dự liệu đầu vào
+        username = username.strip() if username else ""
+        password = password.strip() if password else ""
 
-    def login(
-        self,
-        username: str,
-        password: str
-    ) -> str:
-
-        # chuẩn hóa input
-        username = username.strip()
-        password = password.strip()
-
-        # tìm user
-        user = (
-            self._user_table.get(username)
-        )
+        user = self._user_table.get(username)
 
         if user is None:
             return "FAILED"
 
-        # kiểm tra password
         if not user.check_password(password):
             return "FAILED"
 
-        # lưu user hiện tại
         self._current_user = user
-
-        # trả role
         return user.get_role()
 
     # =================================================
     # ĐĂNG KÝ
     # =================================================
-    
-    def register(
-            self,
-            username: str,
-            password: str,
-            confirm_password: str
-        ) -> bool:
+    def register(self, username: str, password: str, confirm_password: str) -> bool:
         with _auth_lock:
+            # Chuẩn hóa dữ liệu đầu vào
+            username = username.strip() if username else ""
+            password = password.strip() if password else ""
+            confirm_password = confirm_password.strip() if confirm_password else ""
 
-            # chuẩn hóa dữ liệu
-            username = username.strip()
-            password = password.strip()
-            confirm_password = (
-                confirm_password.strip()
-            )
-
-            # username rỗng
             if not username:
                 return False
 
-            # password quá ngắn
+            # Kiểm tra ràng buộc mật khẩu (tối thiểu 6 ký tự)
             if len(password) < 6:
                 return False
 
-            # mật khẩu không khớp
             if password != confirm_password:
                 return False
 
-            # username đã tồn tại
-            if self._user_table.contains(
-                username
-            ):
+            # Tra cứu độ phức tạp O(1) qua bảng băm
+            if self._user_table.contains(username):
                 return False
 
-            # tạo user mới
             user = UserData(
-
                 username=username,
-
                 password=password,
-
                 role="CUSTOMER",
-
-                user_id=
-                self._generate_user_id()
+                user_id=self._generate_user_id()
             )
 
-            # insert vào hash table
-            self._user_table.insert(
-                username,
-                user
-            )
-
-            # lưu file
-            self._io_handler.save_users(
-                self._user_table
-            )
+            # Thêm vào cấu trúc dữ liệu và đồng bộ xuống tệp
+            self._user_table.insert(username, user)
+            self._io_handler.save_users(self._user_table)
 
             return True
 
     # =================================================
-    # ĐĂNG XUẤT
+    # QUẢN LÝ PHIÊN HOẠT ĐỘNG
     # =================================================
-
     def logout(self):
-
         self._current_user = None
 
-    # =================================================
-    # GET CURRENT USER
-    # =================================================
-
     def get_current_user(self):
-
         return self._current_user
 
-    # =================================================
-    # KIỂM TRA ĐĂNG NHẬP
-    # =================================================
-
     def is_logged_in(self):
-
-        return (
-            self._current_user
-            is not None
-        )
-
-    # =================================================
-    # KIỂM TRA ADMIN
-    # =================================================
+        return self._current_user is not None
 
     def is_admin(self):
-
-        if self._current_user is None:
-            return False
-
-        return (
-            self._current_user.get_role()
-            == "ADMIN"
-        )
-
-    # =================================================
-    # GET USER TABLE
-    # =================================================
+        if self._current_user is None: return False
+        return self._current_user.get_role() == "ADMIN"
 
     def get_user_table(self):
-
         return self._user_table
 
-    # =================================================
-    # LẤY TOÀN BỘ USER
-    # =================================================
-
     def get_all_users(self):
-
-        return (
-            self._user_table.get_all()
-        )
-
-
-
+        return self._user_table.get_all()
