@@ -640,7 +640,11 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         room_options += [f"{r.get_room_id()} - {r.get_room_name()}"]
                         
                     selected_room_str = st.selectbox("Chọn phòng chiếu cần thay đổi:", room_options)
-                    extracted_room_id = selected_room_str.split(" - ")[0]
+                    extracted_room_id = "" # Vẫn giữ đúng tên biến này để không bị lỗi các dòng code phía sau
+                    for char in selected_room_str:
+                        if char == " ":  # Gặp khoảng trắng đầu tiên là dừng
+                            break
+                        extracted_room_id += char
                     
                     with st.form("update_room_form"):
                         st.subheader("Chỉnh Sửa Định Danh Phòng")
@@ -1373,7 +1377,6 @@ elif st.session_state.current_page == 'booking':
             
             col_sum1, col_sum2 = st.columns([3, 1])
             with col_sum1:
-                # Đoạn code dùng vòng lặp thay thế cho .join()
                 seats_display = ""
                 count = 0
                 for s in st.session_state.selected_seats:
