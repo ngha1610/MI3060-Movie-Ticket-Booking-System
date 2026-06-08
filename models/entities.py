@@ -24,8 +24,8 @@ class UserData:
         if not password.strip():
             raise ValueError("Password không hợp lệ")
 
-        self._username = username
-        self._password = password
+        self._username = username.strip()
+        self._password = password.strip()
 
         self._role = role
         self._user_id = user_id
@@ -124,7 +124,7 @@ class MovieData:
 
         self._movie_id = movie_id
 
-        self._title = title
+        self._title = title.strip()
         self._genre = genre
 
         self._duration = duration
@@ -194,6 +194,9 @@ class MovieData:
     def set_poster_path(self, poster_path):
         self._poster_path = poster_path
 
+    def set_revenue(self, revenue):
+        if revenue >= 0:
+            self._revenue = revenue
     # =====================================================
     # NGHIỆP VỤ
     # =====================================================
