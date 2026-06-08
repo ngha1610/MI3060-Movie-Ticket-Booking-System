@@ -3,6 +3,7 @@ import random
 import string
 from faker import Faker
 from models.entities import UserData, MovieData, Room, Showtime, TicketData
+from models.entities import SeatStatus
 
 def generate_mock_data():
     print("Đang khởi tạo dữ liệu, vui lòng đợi vài giây...")
@@ -11,9 +12,9 @@ def generate_mock_data():
     rooms = []
     for i in range(1, 6):
         # Phòng thường: 10 hàng, 12 cột = 120 ghế
-        rooms.append(Room(f"R0{i}", f"Cinema {i}", 10, 12))
+        rooms += [Room(f"R0{i}", f"Cinema {i}", 10, 12)]
     # Phòng Starium: 15 hàng, 20 cột = 300 ghế
-    rooms.append(Room("R06", "Starium", 15, 20))
+    rooms += [Room("R06", "Starium", 15, 20)]
     
     # 2. TẠO MOVIES (10 Phim hot từ T12/2025 - T5/2026 lấy từ thực tế)
     # 2. TẠO MOVIES (60 Phim chiếu rạp tại Việt Nam - Trải dài 6 tháng)
@@ -117,7 +118,7 @@ def generate_mock_data():
        if is_hot:
            movie.add_revenue(base_price * 563)
 
-       movies.append(movie)
+       movies += [movie]
     # 3. TẠO SHOWTIMES (Trong 6 tháng qua)
     showtimes = []
     end_date = datetime.now()
@@ -139,10 +140,10 @@ def generate_mock_data():
                 st_id = f"ST{st_counter:09d}"
                 st_time_str = f"{current_date.strftime('%Y-%m-%d')} {slot}"
                 
-                showtimes.append(Showtime(
+                showtimes += [Showtime(
                     st_id, selected_movie.get_movie_id(), st_time_str,
                     room.get_room_id(), room.rows, room.cols
-                ))
+                )]
                 st_counter += 1
 
     # 4. TẠO USERS (8000 Users)
@@ -158,7 +159,7 @@ def generate_mock_data():
        username = f"admin_{fake.user_name().lower()}" 
        password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     
-       users.append(UserData(username, password, "ADMIN", u_id))
+       users += [UserData(username, password, "ADMIN", u_id)]
 
 # --- 2. SINH TÀI KHOẢN CUSTOMER (8000 người từ ID 11 đến 8010) ---
     for i in range(11, 8011):
@@ -168,7 +169,7 @@ def generate_mock_data():
        username = fake.user_name().lower() 
        password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     
-       users.append(UserData(username, password, "CUSTOMER", u_id))
+       users += [UserData(username, password, "CUSTOMER", u_id)]
         
     # 5. TẠO TICKETS & CẬP NHẬT DOANH THU, GHẾ NGỒI
     tickets = []
@@ -205,7 +206,7 @@ def generate_mock_data():
             for r in range(matrix.get_rows()):
                 for c in range(matrix.get_cols()):
                     if matrix.check_status(r, c) == SeatStatus.EMPTY:
-                        empty_seats.append((r, c))
+                        empty_seats += [(r, c)]
                         
             if empty_seats:
                 # Đặt ghế
@@ -218,7 +219,7 @@ def generate_mock_data():
                 # Đặt booking time lùi về trước giờ chiếu 1 chút cho logic
                 ticket.booking_time = st_date - timedelta(hours=random.randint(1, 48))
                 
-                tickets.append(ticket)
+                tickets += [ticket]
                 ticket_counter += 1
                 
                 # Cập nhật doanh thu cho phim
