@@ -110,10 +110,7 @@ class FileIOHandler:
         try:
             with open(f"{self.base_path}ui_config.csv", mode="r", encoding="utf-8") as f:
                 for line in f:
-                    clean_line = ""
-                    for char in line:
-                        if char != '\n' and char != '\r':
-                            clean_line += char
+                    clean_line = line.strip()
                     
                     parts = []
                     temp_str = ""

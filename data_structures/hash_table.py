@@ -99,6 +99,7 @@ class UserHashTable:
         if head is None:
             return False
 
+        # TH1: Node cần xoá là head
         if (
             head.get_data().get_username()
             == username
@@ -121,6 +122,7 @@ class UserHashTable:
 
             return True
 
+        # TH 2: Node cần xoá nằm giữa hoặc cuối
         prev = head
 
         current = head.get_next()
