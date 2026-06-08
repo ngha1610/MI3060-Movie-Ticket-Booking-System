@@ -2,7 +2,8 @@ from models.entities import (
     Showtime,
     TicketData,
     UserData,
-    MovieData
+    MovieData,
+    SeatStatus
 )
 from data_structures.linked_lists import TicketLinkedList
 from data_structures.file_io import FileIOHandler
@@ -118,7 +119,7 @@ class BookingController:
         """
         with self._booking_lock:
             # 1. ĐỒNG BỘ TRÊN RAM: Làm sạch và nạp lại vé từ tickets.csv để cập nhật sơ đồ ghế mới nhất
-            from data_structures.linked_lists import TicketLinkedList
+            
             self._ticket_list = TicketLinkedList()
             self._io_handler.load_tickets(self._ticket_list)
                
@@ -205,7 +206,7 @@ class BookingController:
     # =================================================
 
     def process_counter_booking(self, movie, showtime, row, col):
-        from models.entities import TicketData, SeatStatus
+        
         with self._booking_lock: 
             
             # 1. Kiểm tra trạng thái ghế và đổi trạng thái
@@ -351,7 +352,7 @@ class BookingController:
     # TỰ ĐỘNG QUÉT VÀ HỦY VÉ HẾT HẠN THANH TOÁN
     # =================================================
     def cleanup_unfinished_reservations(self, timeout_minutes: int = 5) -> None:
-        from datetime import datetime
+        
         now = datetime.now()
         has_changed = False
         
@@ -387,7 +388,7 @@ class BookingController:
             self._io_handler.save_tickets(self._ticket_list)
 
     def _sync_matrix_from_tickets(self):
-        from models.entities import SeatStatus
+        
         current = self._ticket_list.get_head()
         
         # Thay Dictionary {} bằng Mảng 2 chiều [[id, obj], ...]
@@ -424,7 +425,6 @@ class BookingController:
                     
             current = current.get_next()
             
-        # ❌ TUYỆT ĐỐI KHÔNG CÓ LỆNH SAVE_SHOWTIMES Ở ĐÂY VÌ SHOWTIMES LÀ FILE TĨNH!
     # =================================================
     # ADMIN HỦY VÉ
     # =================================================
@@ -468,7 +468,7 @@ class BookingController:
         """Hàm làm mới ma trận ghế siêu tốc bằng cách nạp lại duy nhất file tickets.csv"""
         with self._booking_lock:
             # Tạo danh sách liên kết vé mới tinh để nạp sạch dữ liệu từ ổ cứng lên RAM
-            from data_structures.linked_lists import TicketLinkedList
+            
             self._ticket_list = TicketLinkedList()
             self._io_handler.load_tickets(self._ticket_list)
             current_st = (
@@ -485,15 +485,11 @@ class BookingController:
                     .get_seat_matrix()
                 )
 
-                for r in range(matrix.get_rows()):
-                    for c in range(matrix.get_cols()):
-                        from models.entities import SeatStatus
-
-                        matrix.set_seat_status(
-                            r,
-                            c,
-                            SeatStatus.EMPTY
-                        )
+                # Truy cập trực tiếp vào mảng dữ liệu để reset 
+                rows = matrix.get_rows()
+                cols = matrix.get_cols()
+                
+                matrix._seats.data = [SeatStatus.EMPTY] * (rows * cols)
 
                 current_st = current_st.get_next()
             self._sync_matrix_from_tickets()
