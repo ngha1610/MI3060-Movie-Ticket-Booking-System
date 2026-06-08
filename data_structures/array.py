@@ -9,7 +9,7 @@ class Array2D:
         total_elements = rows * cols
         count = 0
         while count < total_elements:
-            self.data.append(default_value)
+            self.data += [default_value]
             count += 1
 
     def get_val(self, r, c):  

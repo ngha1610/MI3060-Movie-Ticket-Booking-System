@@ -90,7 +90,7 @@ class TicketLinkedList:
 
             if ticket.get_user_id() == user_id:
 
-                result.append(ticket)
+                result = result + [ticket]
 
             current = current.get_next()
 
@@ -332,7 +332,7 @@ class ShowtimeLinkedList:
                 == movie_id
             ):
 
-                result.append(st)
+                result = result + [st]
 
             current = current.get_next()
 

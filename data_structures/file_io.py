@@ -13,7 +13,6 @@ from models.entities import (
     Room
 )
 
-
 class FileIOHandler:
 
     def __init__(self, base_path="data/"):
@@ -101,6 +100,59 @@ class FileIOHandler:
                     })
 
                     current = current.get_next()
+
+    # =====================================================
+    # UI CONFIG
+    # =====================================================
+
+    def load_ui_config(self):
+        config = {"SLIDER": [], "LIST": []}
+        try:
+            with open(f"{self.base_path}ui_config.csv", mode="r", encoding="utf-8") as f:
+                for line in f:
+                    clean_line = ""
+                    for char in line:
+                        if char != '\n' and char != '\r':
+                            clean_line += char
+                    
+                    parts = []
+                    temp_str = ""
+                    for char in clean_line:
+                        if char == "|":
+                            parts += [temp_str]
+                            temp_str = ""
+                        else:
+                            temp_str += char
+                    parts += [temp_str]
+                    
+                    count_parts = 0
+                    for _ in parts: count_parts += 1
+
+                    if count_parts > 0:
+                        key = parts[0]
+                        if key == "SLIDER" or key == "LIST":
+                            idx = 1
+                            while idx < count_parts:
+                                if parts[idx] != "":
+                                    config[key] += [parts[idx]]
+                                idx += 1
+        except FileNotFoundError:
+            print(f"[WARNING] ui_config.csv chưa tồn tại")
+        return config
+
+    def save_ui_config(self, slider_titles, list_titles):
+        with open(f"{self.base_path}ui_config.csv", mode="w", encoding="utf-8") as f:
+            # Ghi dòng SLIDER
+            f.write("SLIDER")
+            for title in slider_titles:
+                f.write(f"|{title}")
+            f.write("\n")
+            
+            # Ghi dòng LIST
+            f.write("LIST")
+            for title in list_titles:
+                f.write(f"|{title}")
+            f.write("\n")
 
     # =====================================================
     # MOVIES
@@ -240,7 +292,18 @@ class FileIOHandler:
     # =====================================================
 
     def load_showtimes(self, showtime_list):
-
+        
+        # 1. ĐỌC DỮ LIỆU PHÒNG TRƯỚC (Lấy số Hàng và Cột)
+        room_list_data = [] 
+        try:
+            with open(self.rooms_file, mode="r", encoding="utf-8") as rf:
+                r_reader = csv.DictReader(rf)
+                for r_row in r_reader:
+                    room_list_data += [[r_row["room_id"], int(r_row["rows"]), int(r_row["cols"])]]
+        except FileNotFoundError:
+            pass
+            
+        # 2. SAU ĐÓ MỚI MỞ FILE SUẤT CHIẾU RA ĐỌC
         try:
             with open(
                 self.showtimes_file,
@@ -250,16 +313,21 @@ class FileIOHandler:
                 reader = csv.DictReader(f)
             
                 for row in reader:
-                    # 1. Xác định kích thước ghế theo ID phòng chiếu
-                    # Lấy dữ liệu an toàn, nếu là rỗng (None) thì ép thành chuỗi "" rồi mới strip
+                    # Xác định kích thước ghế theo ID phòng chiếu
                     room_id_raw = row.get("room_id", "")
-                    room_id = str(room_id_raw).strip() if room_id_raw else "R01" # Gán tạm phòng R01 nếu lỡ thiếu dữ liệu
-                    if room_id == "R06":
-                        rows, cols = 15, 20
-                    else:
-                        rows, cols = 10, 12
+                    room_id = str(room_id_raw).strip() if room_id_raw else "R01" 
+                    
+                    # Đặt giá trị mặc định trước 
+                    rows, cols = 10, 12
 
-                    # 2. Khởi tạo suất chiếu với cấu hình rạp tương ứng
+                    # Tìm kiếm tuần tự trong mảng 2 chiều
+                    for r_data in room_list_data:
+                        if r_data[0] == room_id:
+                            rows = r_data[1]
+                            cols = r_data[2]
+                            break
+
+                    # Khởi tạo suất chiếu với cấu hình rạp tương ứng
                     showtime = Showtime(
                         showtime_id=row["showtime_id"],
                         movie_id=row["movie_id"],
@@ -269,7 +337,7 @@ class FileIOHandler:
                         room_cols=cols
                     )
 
-                    # 3. Đọc dữ liệu ghế đã đặt (nếu file CSV có lưu cột seats_matrix)
+                    # Đọc dữ liệu ghế đã đặt (nếu file CSV có lưu cột seats_matrix)
                     if "seats_matrix" in row and row["seats_matrix"]:
                         try:
                             import ast
@@ -412,7 +480,7 @@ class FileIOHandler:
     # SAVE ALL
     # =====================================================
 
-    def save_all(
+    def saveData(
         self,
         users,
         movies,
@@ -430,7 +498,7 @@ class FileIOHandler:
     # LOAD ALL
     # =====================================================
 
-    def load_all(
+    def loadData(
         self,
         users,
         movies,

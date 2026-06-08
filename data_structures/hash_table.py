@@ -201,7 +201,7 @@ class UserHashTable:
 
                 visited = True
 
-                result.append(current.get_data())
+                result = result + [current.get_data()]
 
                 current = current.get_next()
 
