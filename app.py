@@ -7,7 +7,7 @@ import time
 
 # Import các thành phần của hệ thống
 from models.entities import SeatStatus, MovieData
-from data_structures.file_io import FileIOHandler
+from models.file_io import FileIOHandler
 from controllers.auth_controller import AuthController
 from controllers.movie_controller import MovieController
 from controllers.booking_controller import BookingController
@@ -852,7 +852,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
         st.markdown("---")
         st.subheader("TIẾN HÀNH CHỌN GHẾ và IN VÉ")
         
-        # Khởi tạo biến và dùng Tìm kiếm nhị phân để tìm phim
+        # Khởi tạo biến và dùng Tìm kiếm tuần tự để tìm phim
         movie_obj = None
         if all_movies:
             for m in all_movies:
