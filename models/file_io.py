@@ -5,7 +5,7 @@ import ast
 
 csv.field_size_limit(2147483647)
 
-from entities import UserData, MovieData, TicketData, Showtime, Room
+from models.entities import UserData, MovieData, TicketData, Showtime, Room
 
 class FileIOHandler:
 
