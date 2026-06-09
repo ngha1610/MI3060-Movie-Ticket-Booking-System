@@ -1,16 +1,8 @@
 import threading
 
-from models.entities import (
-    UserData
-)
-
-from data_structures.hash_table import (
-    UserHashTable
-)
-
-from data_structures.file_io import (
-    FileIOHandler
-)
+from models.entities import UserData
+from data_structures.hash_table import UserHashTable
+from models.file_io import FileIOHandler
 
 # =====================================================
 # AUTH CONTROLLER: BỘ ĐIỀU KHIỂN XÁC THỰC NGƯỜI DÙNG

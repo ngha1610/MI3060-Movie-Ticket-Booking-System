@@ -1,5 +1,5 @@
 import streamlit as st
-from data_structures.file_io import FileIOHandler
+from models.file_io import FileIOHandler
 from controllers.auth_controller import AuthController
 from controllers.movie_controller import MovieController
 from controllers.booking_controller import BookingController

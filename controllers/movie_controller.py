@@ -1,6 +1,6 @@
 from models.entities import (MovieData)
 from data_structures.linked_lists import (MovieLinkedList)
-from data_structures.file_io import FileIOHandler
+from models.file_io import FileIOHandler
 
 
 # =====================================================

@@ -1,12 +1,8 @@
 from models.entities import Room
 
-from data_structures.linked_lists import (
-    RoomLinkedList
-)
+from data_structures.linked_lists import RoomLinkedList
 
-from data_structures.file_io import (
-    FileIOHandler
-)
+from models.file_io import FileIOHandler
 
 # =====================================================
 # ROOM CONTROLLER: BỘ ĐIỀU KHIỂN HẠ TẦNG PHÒNG CHIẾU

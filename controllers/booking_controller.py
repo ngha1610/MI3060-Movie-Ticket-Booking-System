@@ -6,7 +6,7 @@ from models.entities import (
     SeatStatus
 )
 from data_structures.linked_lists import TicketLinkedList
-from data_structures.file_io import FileIOHandler
+from models.file_io import FileIOHandler
 from controllers.showtime_controller import ShowtimeController
 from controllers.movie_controller import MovieController
 from datetime import datetime

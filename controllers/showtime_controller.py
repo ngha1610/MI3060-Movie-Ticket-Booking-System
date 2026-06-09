@@ -1,15 +1,6 @@
-from models.entities import (
-    Showtime,
-    SeatStatus
-)
-
-from data_structures.linked_lists import (
-    ShowtimeLinkedList
-)
-
-from data_structures.file_io import (
-    FileIOHandler
-)
+from models.entities import Showtime, SeatStatus
+from data_structures.linked_lists import ShowtimeLinkedList
+from models.file_io import FileIOHandler
 
 class ShowtimeController:
 
