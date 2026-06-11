@@ -819,7 +819,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                 # Lọc lấy danh sách tên phim 
                 movie_titles = []
                 for group in daily_schedule:
-                    movie_titles += [group["movie"].get_title()]
+                    movie_titles += [group[0].get_title()]
                 
                 with qb2:
                     selected_title = st.selectbox("2. Chọn Cuộn Phim", ["-- Chọn phim --"] + movie_titles if movie_titles else ["Không có phim"], key="admin_movie_sel_2")
@@ -830,13 +830,13 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                     # Dò tìm lại Gói dữ liệu bằng vòng lặp for (Không dùng hàm next() của Python)
                     selected_group = None
                     for g in daily_schedule:
-                        if g["movie"].get_title() == selected_title:
+                        if g[0].get_title() == selected_title:
                             selected_group = g
                             break
                     
                     if selected_group:
                         # Móc danh sách các suất chiếu từ trong Gói đó ra và lấy Giờ
-                        available_times = showtime_controller.get_unique_sorted_times(selected_group["showtimes"])
+                        available_times = showtime_controller.get_unique_sorted_times(selected_group[1])
                         with qb3:
                             selected_time = st.selectbox("3. Khung Giờ", ["-- Chọn giờ --"] + available_times if available_times else ["Chưa có giờ"], key="admin_time_sel_2")
                 else:
@@ -1165,7 +1165,7 @@ elif st.session_state.current_page == 'home':
                 
                 movie_titles = []
                 for group in daily_schedule:
-                    movie_titles += [group["movie"].get_title()]
+                    movie_titles += [group[0].get_title()]
                 
                 with qb2:
                     selected_title = st.selectbox("2. Chọn Cuộn Phim", ["-- Chọn phim --"] + movie_titles if movie_titles else ["Không có phim"], key="admin_movie_sel_2")
@@ -1175,12 +1175,12 @@ elif st.session_state.current_page == 'home':
                     
                     selected_group = None
                     for g in daily_schedule:
-                        if g["movie"].get_title() == selected_title:
+                        if g[0].get_title() == selected_title:
                             selected_group = g
                             break
                     
                     if selected_group:
-                        available_times = showtime_controller.get_unique_sorted_times(selected_group["showtimes"])
+                        available_times = showtime_controller.get_unique_sorted_times(selected_group[1])
                         with qb3:
                             selected_time = st.selectbox("3. Khung Giờ", ["-- Chọn giờ --"] + available_times if available_times else ["Chưa có giờ"], key="admin_time_sel_2")
                 else:
