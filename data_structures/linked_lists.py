@@ -119,6 +119,12 @@ class TicketLinkedList:
 
     def get_tail(self):
         return self._tail
+    
+    def clear(self):
+        """Xóa sạch toàn bộ node nhưng giữ nguyên object reference."""
+        self._head = None
+        self._tail = None
+
 class MovieLinkedList:
 
     def __init__(self):
