@@ -125,13 +125,13 @@ booking_controller = st.session_state.booking_ctrl
 admin_controller = st.session_state.admin_ctrl
 
 # ==========================================
-# 3. CHUYỂN TRANG & POPUP QUẢNG CÁO
+# 4. CHUYỂN TRANG & POPUP QUẢNG CÁO
 # ==========================================
 # Import hàm phụ trợ giao diện từ file bên ngoài
 from ui_components import navigate_to, show_advertisement, create_premium_movie_card, show_popcorn_effect
 
 # ==========================================
-# 4. CSS DÀNH CHO GIAO DIỆN (VINTAGE STYLE)
+# 5. CSS DÀNH CHO GIAO DIỆN (VINTAGE STYLE)
 # ==========================================
 # Định dạng phông chữ, màu sắc, hiệu ứng thẻ phim và đồng bộ hóa kích thước ma trận ghế
 st.markdown("""
@@ -220,7 +220,7 @@ st.markdown("""
 st.markdown('<div class="bg-decoration gear-1">⚙</div><div class="bg-decoration gear-2">⚙</div><div class="bg-decoration gear-3">⚙</div>', unsafe_allow_html=True)
 
 # ==========================================
-# 5. QUẢN LÝ PHIÊN HOẠT ĐỘNG (ĐĂNG NHẬP / ĐĂNG KÝ)
+# 6. QUẢN LÝ PHIÊN HOẠT ĐỘNG (ĐĂNG NHẬP / ĐĂNG KÝ)
 # ==========================================
 # Thanh Sidebar dùng để người dùng tương tác, xác thực và điều hướng
 with st.sidebar:
@@ -279,7 +279,9 @@ with st.sidebar:
         st.caption(f"Hạng: {st.session_state.user_role.upper()}")
         
         if st.session_state.user_role == 'customer':
-            if st.button("Sảnh Chính", use_container_width=True): navigate_to("home")
+            if st.button("Sảnh Chính", use_container_width=True):
+                st.session_state.selected_seats = [] # RESET GHẾ
+                navigate_to("home")
             if st.button("Vé Của Tôi", use_container_width=True): navigate_to("history")
             st.divider()
         
@@ -294,7 +296,7 @@ with st.sidebar:
             st.rerun()
 
 # ==========================================
-# 6. KHUNG GIAO DIỆN CHÍNH
+# 7. KHUNG GIAO DIỆN CHÍNH
 # ==========================================
 st.markdown("""
 <div class="vintage-marquee">
@@ -505,11 +507,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                             selected_movie_id = movie_node.get_data().get_movie_id() if movie_node else None
 
                             # Tách ID và tìm phòng chiếu qua Controller
-                            room_id_extracted = ""
-                            for char in selected_room_str:
-                                if char == " ": # Gặp khoảng trắng đầu tiên là dừng
-                                    break
-                                room_id_extracted += char
+                            room_id_extracted = selected_room_str.split(" - ")[0]
                             room_node = room_controller.find_room(room_id_extracted)
 
                             if room_node and selected_movie_id:
@@ -537,7 +535,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                                 time.sleep(1)
                                 st.rerun()
                             else:
-                                st.error("Lỗi: Khung giờ này bị trùng lặp với suất chiếu khác trong cùng phòng! Vui lòng chọn giờ khác.")
+                                st.error("Lỗi: Khung giờ bị trùng hoặc sai định dạng ngày giờ (YYYY-MM-DD HH:MM). Vui lòng kiểm tra lại!")
 
         # --- XÓA SUẤT CHIẾU ---
         elif st_action == "Xóa Suất Chiếu":
@@ -640,11 +638,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         room_options += [f"{r.get_room_id()} - {r.get_room_name()}"]
                         
                     selected_room_str = st.selectbox("Chọn phòng chiếu cần thay đổi:", room_options)
-                    extracted_room_id = "" # Vẫn giữ đúng tên biến này để không bị lỗi các dòng code phía sau
-                    for char in selected_room_str:
-                        if char == " ":  # Gặp khoảng trắng đầu tiên là dừng
-                            break
-                        extracted_room_id += char
+                    room_id_extracted = selected_room_str.split(" - ")[0]
                     
                     with st.form("update_room_form"):
                         st.subheader("Chỉnh Sửa Định Danh Phòng")
@@ -654,7 +648,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                             if not new_room_name.strip():
                                 st.error("Tên phòng chiếu mới không được để trống!")
                             else:
-                                if room_controller.update_room(extracted_room_id, new_room_name.strip()):
+                                if room_controller.update_room (room_id_extracted, new_room_name.strip()):
                                     st.toast("Đã cập nhật tên phòng chiếu!")
                                     st.success("Thay đổi thông tin phòng thành công! Đang tải lại dữ liệu...")
                                     time.sleep(1)
@@ -898,6 +892,8 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         ticket_info = booking_controller.generate_ticket_info(ticket_id)
                         st.success("Giao dịch thành công!")
                         st.info(f"ĐÃ IN VÉ:\n{ticket_info}")
+
+                        st.session_state.admin_selected_seats = []
                     else:
                         st.error("Lỗi: Ghế này đã được bán hoặc hệ thống đang bận. Vui lòng đổi ghế khác!")
                 
@@ -1208,6 +1204,7 @@ elif st.session_state.current_page == 'home':
                     # Lưu Ngày & Giờ khách vừa chọn vào bộ nhớ tạm để sang phòng vé lôi ra dùng
                     st.session_state.target_date = selected_date
                     st.session_state.target_time = selected_time
+                    st.session_state.selected_seats = []
                     navigate_to("booking", selected_fast_movie)
                     
         st.markdown('</div>', unsafe_allow_html=True)
@@ -1249,6 +1246,7 @@ elif st.session_state.current_page == 'home':
 # C. GIAO DIỆN KHÁCH HÀNG - ĐẶT GHẾ (BOOKING)
 # ------------------------------------------
 elif st.session_state.current_page == 'booking':
+
     if st.button("TRỞ VỀ SẢNH CHÍNH", type="secondary"): navigate_to("home")
     
     if st.session_state.get('booking_success', False):
@@ -1506,6 +1504,7 @@ elif st.session_state.current_page == 'booking':
                     st.session_state.payment_step = False
                     
                     if st.button("Bắt đầu đặt lại", type="primary"):
+                        st.session_state.selected_seats = [] # RESET GHẾ
                         st.rerun()
 
 # ------------------------------------------
@@ -1538,7 +1537,7 @@ elif st.session_state.current_page == 'history':
         st.dataframe(df_history, use_container_width=True, hide_index=True)
 
 # ==========================================
-# 7. QUẢNG CÁO
+# 8. QUẢNG CÁO
 # ==========================================
 if not st.session_state.ad_closed and st.session_state.current_page == 'home' and st.session_state.user_role != 'admin':
     show_advertisement()
