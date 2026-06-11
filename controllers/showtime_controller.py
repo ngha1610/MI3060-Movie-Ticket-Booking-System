@@ -50,8 +50,7 @@ class ShowtimeController:
 
     def add_showtime(
         self,
-        st: Showtime,
-        movie_controller 
+        st: Showtime
     ) -> bool:
 
         from datetime import datetime, timedelta
@@ -74,7 +73,6 @@ class ShowtimeController:
 
         format_str = "%Y-%m-%d %H:%M"
         
-        format_str = "%Y-%m-%d %H:%M"
         
         # 1. Validate và Parse ngày giờ an toàn
         try:
@@ -360,15 +358,13 @@ class ShowtimeController:
     # =================================================
     # LẤY DANH SÁCH PHIM & SUẤT CHIẾU THEO NGÀY
     # =================================================
-    def get_schedule_by_date(self, target_date: str, movie_controller):
+    def get_schedule_by_date(self, target_date: str):
         daily_schedule = []
         
         current = self._showtime_list.get_head()
 
         while current is not None:
             st = current.get_data()
-            start_time_str = st.get_start_time()
-            
             # Nếu suất chiếu khớp với ngày khách chọn
             if self.extract_date(st) == target_date:
                 movie_id = st.get_movie_id()
@@ -383,7 +379,7 @@ class ShowtimeController:
                 
                 # Nếu chưa có thì tạo nhóm mới
                 if found_group is None:
-                    movie_node = movie_controller.search_by_id(movie_id)
+                    movie_node = self._movie_controller.search_by_id(movie_id)
                     if movie_node is not None:
                         found_group = [
                             movie_node.get_data(),

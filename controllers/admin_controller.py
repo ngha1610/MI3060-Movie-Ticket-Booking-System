@@ -198,7 +198,8 @@ class AdminController:
             success = self._movie_controller.delete_movie(movie_id)
             
             if success:
-                self._booking_controller.refresh_booking_data()
+                # Gọi bản k có lock vì đang giữ lock rồi
+                self._booking_controller._refresh_booking_data_no_lock()
                 
             return success
     def admin_delete_room(self, room_id: str) -> bool:

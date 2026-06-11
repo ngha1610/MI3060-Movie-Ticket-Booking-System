@@ -347,38 +347,40 @@ class BookingController:
     def cleanup_unfinished_reservations(self, timeout_minutes: int = 5) -> None:
         
         now = datetime.now()
-        has_changed = False
         
-        current = self._ticket_list.get_head()
-        while current is not None:
-            ticket = current.get_data()
-            
-            # Chỉ xử lý những vé đang ở trạng thái giữ chỗ (RESERVED)
-            if str(ticket.get_status()) == "RESERVED" and ticket.get_booking_time():
-                try:
-                    # Chuyển chuỗi lưu trong vé ngược lại thành đối tượng datetime để tính toán
-                    booking_time = datetime.strptime(ticket.get_booking_time(), "%Y-%m-%d %H:%M:%S")
-                    # Tính khoảng thời gian đã trôi qua (phút)
-                    elapsed_minutes = (now - booking_time).total_seconds() / 60
-                    
-                    if elapsed_minutes > timeout_minutes:
-                        # 1. Đổi seat_id (VD: "A5") thành chỉ số dòng, cột tương tự hàm cancel_booking của bạn
-                        row, col = self.parse_seat_id(ticket.get_seat_id())
-                        # 2. Giải phóng ghế trong ma trận suất chiếu về trạng thái EMPTY
-                        self._showtime_controller.release_seat(ticket.get_showtime_id(), row, col)
+        with self._booking_lock:
+            has_changed = False
+
+            current = self._ticket_list.get_head()
+            while current is not None:
+                ticket = current.get_data()
+                
+                # Chỉ xử lý những vé đang ở trạng thái giữ chỗ (RESERVED)
+                if str(ticket.get_status()) == "RESERVED" and ticket.get_booking_time():
+                    try:
+                        # Chuyển chuỗi lưu trong vé thành đối tượng datetime để tính toán
+                        booking_time = datetime.strptime(ticket.get_booking_time(), "%Y-%m-%d %H:%M:%S")
+                        # Tính khoảng thời gian đã trôi qua (phút)
+                        elapsed_minutes = (now - booking_time).total_seconds() / 60
                         
-                        # 3. Chuyển trạng thái vé thành CANCELLED
-                        ticket.set_status("CANCELLED")
-                        has_changed = True
-                except ValueError:
-                    # Bỏ qua nếu chuỗi thời gian bị lỗi định dạng
-                    pass
-                    
-            current = current.get_next()
-            
-        # Nếu có sự thay đổi (có vé bị hủy), ghi lại vào file CSV để đồng bộ dữ liệu
-        if has_changed:
-            self._io_handler.save_tickets(self._ticket_list)
+                        if elapsed_minutes > timeout_minutes:
+                            # 1. Đổi seat_id (VD: "A5") thành chỉ số dòng, cột 
+                            row, col = self.parse_seat_id(ticket.get_seat_id())
+                            # 2. Giải phóng ghế trong ma trận suất chiếu về trạng thái EMPTY
+                            self._showtime_controller.release_seat(ticket.get_showtime_id(), row, col)
+                            
+                            # 3. Chuyển trạng thái vé thành CANCELLED
+                            ticket.set_status("CANCELLED")
+                            has_changed = True
+                    except ValueError:
+                        # Bỏ qua nếu chuỗi thời gian bị lỗi định dạng
+                        pass
+                        
+                current = current.get_next()
+                
+            # Nếu có sự thay đổi (có vé bị hủy), ghi lại vào file CSV để đồng bộ dữ liệu
+            if has_changed:
+                self._io_handler.save_tickets(self._ticket_list)
 
     def _sync_matrix_from_tickets(self):
         
@@ -456,10 +458,8 @@ class BookingController:
         
             return True
 
-    def refresh_booking_data(self):
-        with self._booking_lock:
-            # Tạo danh sách liên kết vé mới để nạp sạch dữ liệu từ ổ cứng lên RAM
-            
+    def _refresh_booking_data_no_lock(self):
+    # private, dùng nội bộ
             self._ticket_list.clear()
             self._io_handler.load_tickets(self._ticket_list)
             current_st = (
@@ -476,16 +476,15 @@ class BookingController:
                     .get_seat_matrix()
                 )
 
-                # Truy cập trực tiếp vào mảng dữ liệu để reset 
-                rows = matrix.get_rows()
-                cols = matrix.get_cols()
-                
                 matrix.reset_all()
 
                 current_st = current_st.get_next()
             self._sync_matrix_from_tickets()
 
-
+    def refresh_booking_data(self):
+    #Dùng TỪ BÊN NGOÀI (UI, các controller khác).
+        with self._booking_lock:
+            self._refresh_booking_data_no_lock()
 
 
 
