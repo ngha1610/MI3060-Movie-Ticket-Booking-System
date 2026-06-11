@@ -447,7 +447,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                 if del_movie:
                     st.error(f"Cảnh báo: Bạn sắp xóa cuộn phim **{del_movie_title}**. Thao tác này không thể hoàn tác.")
                     if st.button("XÁC NHẬN XÓA", type="primary"):
-                        if movie_controller.delete_movie(del_movie.get_movie_id(), showtime_controller):
+                        if admin_controller.admin_delete_movie(del_movie.get_movie_id()):
                             st.toast("Đã xóa phim khỏi hệ thống!")
                             st.warning(f"Đã dọn dẹp '{del_movie_title}' khỏi kho! Đang làm mới danh sách...")
                             time.sleep(1)
@@ -678,7 +678,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                     st.caption("Hệ thống sẽ từ chối xóa nếu phòng chiếu này đang có lịch trình suất chiếu vận hành.")
                     
                     if st.button("XÁC NHẬN GỠ BỎ PHÒNG", type="primary"):
-                        if room_controller.delete_room(extracted_del_id, showtime_controller):
+                        if admin_controller.admin_delete_room(extracted_del_id):
                             st.toast("Đã dọn dẹp phòng chiếu thành công!")
                             st.warning("Đã gỡ bỏ phòng chiếu! Hệ thống đang làm mới...")
                             time.sleep(1)
@@ -1399,7 +1399,7 @@ elif st.session_state.current_page == 'booking':
                         
                         seats_to_book = []
                         for seat in st.session_state.selected_seats:
-                            r, c = booking_controller._parse_seat_id(seat)
+                            r, c = booking_controller.parse_seat_id(seat)
                             seats_to_book += [(r, c)]
                         
                         try:

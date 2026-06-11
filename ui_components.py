@@ -15,7 +15,7 @@ def navigate_to(page, movie=""):
 @st.dialog("SIÊU PHẨM MÙA HÈ TẠI SUNNYX", width="large")
 def show_advertisement():
     st.markdown("<h3 style='text-align: center; color: #73171F; margin-top:0; font-family: \"Playfair Display\", serif;'>BOM TẤN ĐÃ ĐỔ BỘ</h3>", unsafe_allow_html=True)
-    st.image("https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070", use_column_width=True)
+    st.image("https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?q=80&w=2070", use_container_width=True)
     st.markdown("<p style='text-align:center; color:#555; margin-top: 15px; font-style: italic;'>Mua vé liền tay, nhận ngay bắp nước miễn phí!</p>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
