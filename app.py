@@ -517,26 +517,27 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                                 # Tạo ID suất chiếu mới tự động
                                 new_st_id = showtime_controller.generate_showtime_id()
 
-                            # Khởi tạo đối tượng Showtime
-                            from models.entities import Showtime
-                            new_showtime = Showtime(
-                                showtime_id=new_st_id,
-                                movie_id=selected_movie_id,
-                                start_time=start_time_str,
-                                room_id=room.get_room_id(), 
-                                room_rows=room.get_rows(),   
-                                room_cols=room.get_cols()
-                            )
+                                # Khởi tạo đối tượng Showtime
+                                from models.entities import Showtime
+                                new_showtime = Showtime(
+                                    showtime_id=new_st_id,
+                                    movie_id=selected_movie_id,
+                                    start_time=start_time_str,
+                                    room_id=room.get_room_id(), 
+                                    room_rows=room.get_rows(),   
+                                    room_cols=room.get_cols()
+                                )
 
-                            # Cập nhật vào danh sách liên kết (Đã bao gồm thuật toán kiểm tra trùng thời gian)
-                            if showtime_controller.add_showtime(new_showtime, movie_controller):
-                                st.toast("Đã lên lịch chiếu thành công!")
-                                st.success("Thêm suất chiếu mới thành công! Hệ thống đang tải lại...")
-                                time.sleep(1)
-                                st.rerun()
+                                # Cập nhật vào danh sách liên kết (Đã bao gồm thuật toán kiểm tra trùng thời gian)
+                                if showtime_controller.add_showtime(new_showtime):
+                                    st.toast("Đã lên lịch chiếu thành công!")
+                                    st.success("Thêm suất chiếu mới thành công! Hệ thống đang tải lại...")
+                                    time.sleep(1)
+                                    st.rerun()
+                                else:
+                                    st.error("Lỗi: Khung giờ bị trùng hoặc sai định dạng ngày giờ (YYYY-MM-DD HH:MM). Vui lòng kiểm tra lại!")
                             else:
-                                st.error("Lỗi: Khung giờ bị trùng hoặc sai định dạng ngày giờ (YYYY-MM-DD HH:MM). Vui lòng kiểm tra lại!")
-
+                                st.error("Không tìm thấy phòng chiếu hoặc phim. Vui lòng kiểm tra lại!")
         # --- XÓA SUẤT CHIẾU ---
         elif st_action == "Xóa Suất Chiếu":
             if not all_showtimes:
