@@ -44,7 +44,7 @@ class ShowtimeController:
         return f"S{max_id + 1:09d}"
         
     # =================================================
-    # ADD SHOWTIME (ĐÃ FIX: TỰ TÍNH END_TIME QUA MOVIE_CONTROLLER)
+    # ADD SHOWTIME 
     # =================================================
 
     def add_showtime(
@@ -64,8 +64,6 @@ class ShowtimeController:
         if existed:
             return False
 
-        # 1. TÍNH END_TIME CHO CA CHIẾU MỚI (ĐANG MUỐN THÊM)
-        # Vì hàm tìm kiếm của m trả về Node (theo liên kết đơn), ta phải .get_data() để lấy MovieData
         movie_node_new = movie_controller.search_by_id(st.get_movie_id())
         duration_new = 120  # Mặc định rạp phim là 120 phút nếu lỡ không tìm thấy phim
         
@@ -143,7 +141,7 @@ class ShowtimeController:
 
         st = node.get_data()
 
-        st._start_time = new_start_time
+        st.set_start_time(new_start_time)
 
         self._io_handler.save_showtimes(
             self._showtime_list
@@ -176,6 +174,14 @@ class ShowtimeController:
                     ==
                     showtime_id
                 ):
+                    status = str(
+                    ticket.get_status()
+                ).strip().upper()
+
+                if status in [
+                    "BOOKED",
+                    "RESERVED"
+                ]:
                     return False
 
         success = (
@@ -352,39 +358,42 @@ class ShowtimeController:
     # LẤY DANH SÁCH PHIM & SUẤT CHIẾU THEO NGÀY
     # =================================================
     def get_schedule_by_date(self, target_date: str, movie_controller):
-        """
-        Trả về danh sách các phim CÓ CHIẾU trong ngày target_date,
-        kèm theo danh sách các suất chiếu của phim đó.
-        """
-        # Cấu trúc: { movie_id: {"movie": MovieData, "showtimes": [st1, st2]} }
-        daily_schedule = {}
+        daily_schedule = []
         
         current = self._showtime_list.get_head()
+
         while current is not None:
             st = current.get_data()
             start_time_str = st.get_start_time()
             
             # Nếu suất chiếu khớp với ngày khách chọn
-            if isinstance(start_time_str, str) and start_time_str.startswith(target_date):
+            if self.extract_date(st) == target_date:
                 movie_id = st.get_movie_id()
                 
-                # Nếu phim này chưa có trong nhóm, ta gọi movie_controller tìm phim và tạo nhóm mới
-                if movie_id not in daily_schedule:
+                found_group = None
+
+                # Tìm xem phim đã tồn tại trong danh sách chưa
+                for group in daily_schedule:
+                    if group[0].get_movie_id() == movie_id:
+                        found_group = group
+                        break
+                
+                # Nếu chưa có thì tạo nhóm mới
+                if found_group is None:
                     movie_node = movie_controller.search_by_id(movie_id)
                     if movie_node is not None:
-                        daily_schedule[movie_id] = {
-                            "movie": movie_node.get_data(),
-                            "showtimes": []
-                        }
+                        found_group = [
+                            movie_node.get_data(),
+                            []
+                        ]
+                        daily_schedule += [found_group]
                 
-                # Nhét suất chiếu vào danh sách của phim tương ứng
-                if movie_id in daily_schedule:
-                    daily_schedule[movie_id]["showtimes"] += [st]
+                # Thêm suất chiếu vào nhóm phim tương ứng
+                if found_group is not None:
+                    found_group[1] += [st]
                     
             current = current.get_next()
-            
-        # Trả về list các nhóm để giao diện Streamlit dễ dùng vòng lặp
-        return list(daily_schedule.values())
+        return daily_schedule
     # =================================================
     # HÀM HỖ TRỢ TÁCH NGÀY GIỜ CHO GIAO DIỆN
     # =================================================

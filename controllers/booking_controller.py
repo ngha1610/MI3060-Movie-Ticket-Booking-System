@@ -75,36 +75,21 @@ class BookingController:
 
     def _generate_ticket_id(self):
 
-        current = self._ticket_list.get_head()
-        
-        # Nếu chưa có vé nào được đặt
-        if current is None:
+        tail = self._ticket_list.get_tail()
+
+        if tail is None:
             return "T000000001"
 
-        max_id_num = 0
+        last_ticket = tail.get_data()
 
-        # Duyệt dọc theo danh sách liên kết đơn để tìm mã lớn nhất
-        while current is not None:
-            ticket = current.get_data()
-            ticket_id_str = ticket.get_ticket_id()  # Định dạng dạng "T000000042"
-            
-            try:
-                num_str = ""
-                idx = 0
-                for char in ticket_id_str:
-                    if idx > 0: 
-                        num_str += char
-                    idx += 1
-                    
-                id_num = int(num_str)
-                if id_num > max_id_num:
-                    max_id_num = id_num
-            except ValueError:
-                pass
-                
-            current = current.get_next()
+        last_id = last_ticket.get_ticket_id()
 
-        return f"T{max_id_num + 1:09d}"
+        try:
+            number = int(last_id[1:])
+        except ValueError:
+            number = 0
+
+        return f"T{number + 1:09d}"
 
     # =================================================
     # ĐẶT VÉ
