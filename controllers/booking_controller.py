@@ -109,20 +109,16 @@ class BookingController:
         Xử lý đặt nhiều ghế cùng lúc dưới dạng toán tử toàn vẹn (Atomic).
         """
         with self._booking_lock:
-            # 1. ĐỒNG BỘ TRÊN RAM: Làm sạch và nạp lại vé từ tickets.csv để cập nhật sơ đồ ghế mới nhất
             
-            self._ticket_list.clear()               # Xóa dữ liệu, giữ nguyên object
-            self._io_handler.load_tickets(self._ticket_list)
-               
-            self._sync_matrix_from_tickets()
-            
-            # 2. BƯỚC KIỂM TRA TRƯỚC (CHECK PHASE): Xem TẤT CẢ các ghế chọn có thực sự trống không
+            self._refresh_booking_data_no_lock()
+
+            # Xem TẤT CẢ các ghế chọn có thực sự trống không
             for row, col in seats:
                 available = self._showtime_controller.check_seat_status(showtime.get_showtime_id(), row, col)
                 if not available:
                     return [] # Chỉ cần 1 ghế bị chiếm, ngay lập tức hủy toàn bộ tiến trình
 
-            # 3. BƯỚC THỰC THI (EXECUTE PHASE): Khi chắc chắn mọi ghế đều hợp lệ
+            # Khi chắc chắn mọi ghế đều hợp lệ
             generated_ticket_ids = []
             price = movie.get_base_price()
             booking_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -147,12 +143,12 @@ class BookingController:
                 self._ticket_list.add_ticket(ticket)
                 generated_ticket_ids += [ticket_id]
 
-            # 4. GHI FILE TICKETS DUY NHẤT 1 LẦN (Tuyệt đối KHÔNG ghi file showtimes tĩnh!)
+            # GHI FILE TICKETS DUY NHẤT 1 LẦN 
             self._io_handler.save_tickets(self._ticket_list)
             return generated_ticket_ids
 
     # =================================================
-    # VŨ KHÍ SIÊU TỐC: XÁC NHẬN THANH TOÁN THEO CỤM (BULK CONFIRM)
+    # XÁC NHẬN THANH TOÁN THEO CỤM (BULK CONFIRM)
     # =================================================
     def confirm_bookings_bulk(self, ticket_ids: list) -> bool:
         """
