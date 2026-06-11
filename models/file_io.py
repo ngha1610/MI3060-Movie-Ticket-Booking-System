@@ -341,11 +341,7 @@ class FileIOHandler:
 
                             if isinstance(seats_data, list):
                                 seat_matrix = showtime.get_seat_matrix()
-
-                                for r in range(min(rows, len(seats_data))):
-                                    for c in range(min(cols, len(seats_data[0]))):
-                                        seat_matrix = showtime.get_seat_matrix()
-                                        seat_matrix.load_matrix(seats_data)
+                                seat_matrix.load_matrix(seats_data)
 
                         except Exception as e:
                             pass
