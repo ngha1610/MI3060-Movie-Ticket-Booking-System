@@ -51,7 +51,7 @@ class ShowtimeController:
     def add_showtime(
         self,
         st: Showtime,
-        movie_controller  # Truyền thêm movie_controller vào đây để mượn data phim
+        movie_controller 
     ) -> bool:
 
         from datetime import datetime, timedelta
@@ -74,12 +74,17 @@ class ShowtimeController:
 
         format_str = "%Y-%m-%d %H:%M"
         
-        # Parse chuỗi start_time của ca mới thành đối tượng datetime để cộng trừ
-        if isinstance(st.get_start_time(), str):
-            start_new = datetime.strptime(st.get_start_time(), format_str)
-        else:
-            start_new = st.get_start_time()
-            
+        format_str = "%Y-%m-%d %H:%M"
+        
+        # 1. Validate và Parse ngày giờ an toàn
+        try:
+            if isinstance(st.get_start_time(), str):
+                start_new = datetime.strptime(st.get_start_time(), format_str)
+            else:
+                start_new = st.get_start_time()
+        except ValueError:
+            # Nếu Admin nhập sai định dạng, hàm trả về False để UI báo lỗi
+            return False  
         # Thời gian kết thúc = Bắt đầu + Thời lượng phim
         end_new = start_new + timedelta(minutes=duration_new)
 
