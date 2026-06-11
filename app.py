@@ -808,7 +808,7 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                 
             if selected_date != "-- Chọn ngày --" and selected_date != "Chưa có lịch":
                 
-                daily_schedule = showtime_controller.get_schedule_by_date(selected_date, movie_controller)
+                daily_schedule = showtime_controller.get_schedule_by_date(selected_date)
                 
                 # Lọc lấy danh sách tên phim 
                 movie_titles = []
@@ -1157,7 +1157,7 @@ elif st.session_state.current_page == 'home':
                 
             if selected_date != "-- Chọn ngày --" and selected_date != "Chưa có lịch":
                 
-                daily_schedule = showtime_controller.get_schedule_by_date(selected_date, movie_controller)
+                daily_schedule = showtime_controller.get_schedule_by_date(selected_date)
                 
                 movie_titles = []
                 for group in daily_schedule:
