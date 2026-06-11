@@ -331,7 +331,6 @@ class FileIOHandler:
                     # Đọc dữ liệu ghế đã đặt (nếu file CSV có lưu cột seats_matrix)
                     if "seats_matrix" in row and row["seats_matrix"]:
                         try:
-                            import ast
                             raw_data = row["seats_matrix"]
 
                             seats_data = ast.literal_eval(raw_data)
