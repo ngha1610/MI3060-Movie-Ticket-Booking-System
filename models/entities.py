@@ -360,6 +360,9 @@ class Showtime:
 
     def get_start_time(self):
         return self._start_time
+    
+    def set_start_time(self, new_time):
+        self._start_time = new_time
 
     def get_seat_matrix(self):
         return self._seat_matrix
