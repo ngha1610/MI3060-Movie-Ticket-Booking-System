@@ -13,10 +13,8 @@ class TicketLinkedList:
         new_node = TicketNode(ticket)
 
         if self._head is None:
-
             self._head = new_node
             self._tail = new_node
-
             return
 
         self._tail.set_next(new_node)
@@ -44,7 +42,6 @@ class TicketLinkedList:
     def remove_ticket(self, ticket_id):
 
         current = self._head
-
         prev = None
 
         while current is not None:
@@ -59,14 +56,13 @@ class TicketLinkedList:
                 if prev is None:
 
                     self._head = current.get_next()
-
                     if self._head is None:
                         self._tail = None
+
 
                 else:
 
                     prev.set_next(current.get_next())
-
                     if current == self._tail:
                         self._tail = prev
 
@@ -121,11 +117,14 @@ class TicketLinkedList:
     def get_head(self):
         return self._head
 
+    def get_tail(self):
+        return self._tail
 class MovieLinkedList:
 
     def __init__(self):
 
         self._head = None
+        self._tail = None
 
     def add_movie(self, movie: MovieData):
 
@@ -134,16 +133,11 @@ class MovieLinkedList:
         if self._head is None:
 
             self._head = new_node
-
+            self._tail = new_node
             return
-
-        current = self._head
-
-        while current.get_next() is not None:
-
-            current = current.get_next()
-
-        current.set_next(new_node)
+        
+        self._tail.set_next(new_node)
+        self._tail = new_node
 
     def search_movie(self, title):
 
@@ -198,10 +192,14 @@ class MovieLinkedList:
                 if prev is None:
 
                     self._head = current.get_next()
+                    if self._head is None:
+                        self._tail = None
 
                 else:
 
                     prev.set_next(current.get_next())
+                    if current == self._tail:
+                        self._tail = prev
 
                 return True
 
@@ -279,6 +277,7 @@ class ShowtimeLinkedList:
     def __init__(self):
 
         self._head = None
+        self._tail = None
 
     def add_showtime(self, st: Showtime):
 
@@ -287,16 +286,12 @@ class ShowtimeLinkedList:
         if self._head is None:
 
             self._head = new_node
+            self._tail = new_node
 
             return
 
-        current = self._head
-
-        while current.get_next() is not None:
-
-            current = current.get_next()
-
-        current.set_next(new_node)
+        self._tail.set_next(new_node)
+        self._tail = new_node
 
     def find_showtime(self, showtime_id):
 
@@ -356,10 +351,14 @@ class ShowtimeLinkedList:
                 if prev is None:
 
                     self._head = current.get_next()
+                    if self._head is None:
+                        self._tail = None
 
                 else:
 
                     prev.set_next(current.get_next())
+                    if current == self._tail:
+                        self._tail = prev
 
                 return True
 
@@ -399,6 +398,7 @@ class RoomLinkedList:
     def __init__(self):
 
         self._head = None
+        self._tail = None
 
     def add_room(self, room: Room):
 
@@ -407,16 +407,12 @@ class RoomLinkedList:
         if self._head is None:
 
             self._head = new_node
+            self._tail = new_node
 
             return
 
-        current = self._head
-
-        while current.get_next() is not None:
-
-            current = current.get_next()
-
-        current.set_next(new_node)
+        self._tail.set_next(new_node)
+        self._tail = new_node
 
     def find_room(self, room_id):
 
@@ -455,10 +451,14 @@ class RoomLinkedList:
                 if prev is None:
 
                     self._head = current.get_next()
+                    if self._head is None:
+                        self._tail = None
 
                 else:
 
                     prev.set_next(current.get_next())
+                    if current == self._tail:
+                        self._tail = prev
 
                 return True
 
