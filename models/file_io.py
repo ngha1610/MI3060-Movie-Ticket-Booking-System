@@ -344,7 +344,8 @@ class FileIOHandler:
 
                                 for r in range(min(rows, len(seats_data))):
                                     for c in range(min(cols, len(seats_data[0]))):
-                                        seat_matrix._seats[r][c] = seats_data[r][c]
+                                        seat_matrix = showtime.get_seat_matrix()
+                                        seat_matrix.load_matrix(seats_data)
 
                         except Exception as e:
                             pass
@@ -415,7 +416,8 @@ class FileIOHandler:
                         status=row["status"],
                         showtime_id=row["showtime_id"],
                         room_id=row["room_id"],
-                        price=float(row["price"])
+                        price=float(row["price"]),
+                        booking_time=row.get("booking_time") or None
                     )
                     ticket_list.add_ticket(ticket)
 
@@ -442,7 +444,8 @@ class FileIOHandler:
                 "status",
                 "showtime_id",
                 "room_id",
-                "price"
+                "price",
+                "booking_time"
             ]
 
             writer = csv.DictWriter(
@@ -463,7 +466,8 @@ class FileIOHandler:
                     "status": ticket.get_status(),
                     "showtime_id": ticket.get_showtime_id(),
                     "room_id": ticket.get_room_id(),
-                    "price": ticket.get_price()
+                    "price": ticket.get_price(),
+                    "booking_time": ticket.get_booking_time() or ""
                 })
                 current = current.get_next()
 

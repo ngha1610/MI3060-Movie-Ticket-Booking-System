@@ -202,9 +202,10 @@ class MovieData:
     # =====================================================
 
     def add_revenue(self, amount):
+        self._revenue += amount
 
-        if amount > 0:
-            self._revenue += amount
+        if self._revenue < 0:
+            self._revenue = 0
 
 from data_structures.array import Array2D
 
@@ -291,8 +292,11 @@ class SeatMatrix:
            return True
         return False
     
-    
-      
+    def reset_all(self):
+        for r in range(self._rows):
+            for c in range(self._cols):
+                self._seats.set_val(r, c, SeatStatus.EMPTY)
+        
 
 class Room:
 
@@ -302,29 +306,21 @@ class Room:
             raise ValueError("Kích thước phòng không hợp lệ")
 
         self._room_id = room_id
-
-        self.room_name = room_name
-
-        self.rows = rows
-        self.cols = cols
-
+        self._room_name = room_name
+        self._rows = rows
+        self._cols = cols
         self._capacity = rows * cols
 
-    def get_room_id(self):
-        return self._room_id
+    def get_room_id(self): return self._room_id
+    def get_room_name(self): return self._room_name
+    def get_rows(self): return self._rows
+    def get_cols(self): return self._cols
+    def get_capacity(self): return self._capacity
 
-    def get_capacity(self):
-        return self._capacity
-    
-    def get_room_name(self):
-        return self.room_name
-
-    def get_rows(self):
-        return self.rows
-
-    def get_cols(self):
-        return self.cols
-
+    def set_room_name(self, new_name):
+        clean_name = new_name.strip() if new_name else ""
+        if clean_name:
+            self._room_name = clean_name
 class Showtime:
 
     def __init__(
