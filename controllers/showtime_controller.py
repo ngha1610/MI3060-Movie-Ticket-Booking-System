@@ -6,11 +6,12 @@ class ShowtimeController:
 
     def __init__(
         self,
-        io_handler: FileIOHandler
+        io_handler: FileIOHandler,
+        movie_controller
     ):
 
         self._io_handler = io_handler
-
+        self._movie_controller = movie_controller
         self._showtime_list = (
             ShowtimeLinkedList()
         )
@@ -64,7 +65,7 @@ class ShowtimeController:
         if existed:
             return False
 
-        movie_node_new = movie_controller.search_by_id(st.get_movie_id())
+        movie_node_new = self._movie_controller.search_by_id(st.get_movie_id())
         duration_new = 120  # Mặc định rạp phim là 120 phút nếu lỡ không tìm thấy phim
         
         if movie_node_new:
@@ -95,7 +96,7 @@ class ShowtimeController:
             if old_st.get_room_id() == st.get_room_id():
                 
                 # 2. TÍNH END_TIME CHO CA CHIẾU CŨ (ĐANG CÓ TRÊN HỆ THỐNG)
-                movie_node_old = movie_controller.search_by_id(old_st.get_movie_id())
+                movie_node_old = self._movie_controller.search_by_id(old_st.get_movie_id())
                 duration_old = 120
                 if movie_node_old:
                     movie_old = movie_node_old.get_data()
@@ -178,11 +179,8 @@ class ShowtimeController:
                     ticket.get_status()
                 ).strip().upper()
 
-                if status in [
-                    "BOOKED",
-                    "RESERVED"
-                ]:
-                    return False
+                    if status in ["BOOKED", "RESERVED"]:
+                        return False
 
         success = (
             self._showtime_list

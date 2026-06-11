@@ -52,7 +52,7 @@ class BookingController:
     # =================================================
     # HÀM HỖ TRỢ: TÁCH TỌA ĐỘ GHẾ TỪ CHUỖI (CODE CHAY)
     # =================================================
-    def _parse_seat_id(self, seat_id: str):
+    def parse_seat_id(self, seat_id: str):
         seat_id = str(seat_id)
         
         # 1. Tách chữ cái (Hàng) và tự ép về mã ASCII in hoa không dùng .upper()
@@ -74,29 +74,35 @@ class BookingController:
     # =================================================
 
     def _generate_ticket_id(self):
-
-        tail = self._ticket_list.get_tail()
-
-        if tail is None:
+        current = self._ticket_list.get_head()
+        
+        # Nếu danh sách rỗng mã số 1
+        if current is None:
             return "T000000001"
-
-        last_ticket = tail.get_data()
-
-        last_id = last_ticket.get_ticket_id()
-
-        try:
-            number = int(last_id[1:])
-        except ValueError:
-            number = 0
-
-        return f"T{number + 1:09d}"
+            
+        max_id = 0
+        
+        # Duyệt từ đầu đến cuối danh sách để tìm ID lớn nhất
+        while current is not None:
+            ticket = current.get_data()
+            ticket_id = ticket.get_ticket_id()
+            
+            # Cắt chữ 'T', lấy phần số ép sang kiểu Int
+            number = int(ticket_id[1:])
+            
+            if number > max_id:
+                max_id = number
+                
+            current = current.get_next()
+            
+        return f"T{max_id + 1:09d}"
 
     # =================================================
     # ĐẶT VÉ
     # =================================================
   
     # =================================================
-    # ĐẶT VÉ (ĐÃ TỐI ƯU: XÓA LỆNH LOAD_SHOWTIMES GÂY RÁC)
+    # ĐẶT VÉ 
     # =================================================
     def process_booking(self, user: UserData, movie: MovieData, showtime: Showtime, seats: list) -> list:
         """
@@ -105,7 +111,7 @@ class BookingController:
         with self._booking_lock:
             # 1. ĐỒNG BỘ TRÊN RAM: Làm sạch và nạp lại vé từ tickets.csv để cập nhật sơ đồ ghế mới nhất
             
-            self._ticket_list = TicketLinkedList()
+            self._ticket_list.clear()               # Xóa dữ liệu, giữ nguyên object
             self._io_handler.load_tickets(self._ticket_list)
                
             self._sync_matrix_from_tickets()
@@ -164,7 +170,7 @@ class BookingController:
                 if str(ticket.get_status()) != "RESERVED":
                     continue
 
-                row, col = self._parse_seat_id(ticket.get_seat_id())
+                row, col = self.parse_seat_id(ticket.get_seat_id())
 
                 # Chuyển trạng thái ghế trên RAM
                 booked = self._showtime_controller.book_seat(ticket.get_showtime_id(), row, col)
@@ -195,14 +201,16 @@ class BookingController:
         with self._booking_lock: 
             
             # 1. Kiểm tra trạng thái ghế và đổi trạng thái
-            # Nếu có người khác đang mua online vừa nhanh tay hơn chiếm mất, hàm này sẽ trả về False
-            success = self._showtime_controller.change_seat_status_by_admin(
-                showtime.get_showtime_id(), row, col, SeatStatus.BOOKED
+            # Kiểm tra ghế trống trước khi đặt
+            is_available = self._showtime_controller.check_seat_status(
+                showtime.get_showtime_id(), row, col
             )
-            
-            if not success:
-                return False  # Trả về thất bại ngay lập tức vì ghế đã bị mua mất
+            if not is_available:
+                return False
 
+            # Rồi mới thực hiện đặt ghế
+            self._showtime_controller.book_seat(showtime.get_showtime_id(), row, col)
+                    
             # 2. Các bước sinh mã vé và lưu file tiếp theo...
             ticket_id = self._generate_ticket_id()
             booking_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -355,7 +363,7 @@ class BookingController:
                     
                     if elapsed_minutes > timeout_minutes:
                         # 1. Đổi seat_id (VD: "A5") thành chỉ số dòng, cột tương tự hàm cancel_booking của bạn
-                        row, col = self._parse_seat_id(ticket.get_seat_id())
+                        row, col = self.parse_seat_id(ticket.get_seat_id())
                         # 2. Giải phóng ghế trong ma trận suất chiếu về trạng thái EMPTY
                         self._showtime_controller.release_seat(ticket.get_showtime_id(), row, col)
                         
@@ -388,10 +396,9 @@ class BookingController:
             ticket = current.get_data()
             status = str(ticket.get_status())
             
-            # Sửa toán tử IN mảng
-            if status == "BOOKED" or status == "RESERVED":
+            if status in ["BOOKED", "RESERVED"]:
                 try:
-                    row, col = self._parse_seat_id(ticket.get_seat_id())
+                    row, col = self.parse_seat_id(ticket.get_seat_id())
                     
                     # Tìm thủ công trong mảng thay cho showtime_map.get()
                     showtime = None
@@ -427,7 +434,7 @@ class BookingController:
                 return False
                 
             # Giải phóng ghế thông qua showtime_controller trực tiếp
-            row, col = self._parse_seat_id(ticket.get_seat_id())
+            row, col = self.parse_seat_id(ticket.get_seat_id())
             
             self._showtime_controller.release_seat(
                 ticket.get_showtime_id(), row, col
@@ -450,11 +457,10 @@ class BookingController:
             return True
 
     def refresh_booking_data(self):
-        """Hàm làm mới ma trận ghế siêu tốc bằng cách nạp lại duy nhất file tickets.csv"""
         with self._booking_lock:
-            # Tạo danh sách liên kết vé mới tinh để nạp sạch dữ liệu từ ổ cứng lên RAM
+            # Tạo danh sách liên kết vé mới để nạp sạch dữ liệu từ ổ cứng lên RAM
             
-            self._ticket_list = TicketLinkedList()
+            self._ticket_list.clear()
             self._io_handler.load_tickets(self._ticket_list)
             current_st = (
                 self._showtime_controller
@@ -474,7 +480,7 @@ class BookingController:
                 rows = matrix.get_rows()
                 cols = matrix.get_cols()
                 
-                matrix._seats.data = [SeatStatus.EMPTY] * (rows * cols)
+                matrix.reset_all()
 
                 current_st = current_st.get_next()
             self._sync_matrix_from_tickets()

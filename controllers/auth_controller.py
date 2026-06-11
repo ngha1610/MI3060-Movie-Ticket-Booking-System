@@ -7,7 +7,7 @@ from models.file_io import FileIOHandler
 # =====================================================
 # AUTH CONTROLLER: BỘ ĐIỀU KHIỂN XÁC THỰC NGƯỜI DÙNG
 # =====================================================
-_auth_lock = threading.Lock()
+
 
 class AuthController:
     
@@ -20,6 +20,7 @@ class AuthController:
         self._io_handler.load_users(self._user_table)
         self._current_user = None
 
+        self._auth_lock = threading.Lock()
     # =================================================
     # TẠO USER ID: DUYỆT BẢNG BĂM ĐỂ TÌM ID LỚN NHẤT
     # =================================================
@@ -71,7 +72,7 @@ class AuthController:
     # ĐĂNG KÝ
     # =================================================
     def register(self, username: str, password: str, confirm_password: str) -> bool:
-        with _auth_lock:
+        with self._auth_lock:
             # Chuẩn hóa dữ liệu đầu vào
             username = username.strip() if username else ""
             password = password.strip() if password else ""

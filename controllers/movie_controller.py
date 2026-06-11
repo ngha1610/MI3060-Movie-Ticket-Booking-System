@@ -105,37 +105,10 @@ class MovieController:
     # XÓA PHIM
     # =================================================
 
-    def delete_movie(
-        self,
-        movie_id: str,
-        showtime_controller
-    ) -> bool:
-
-        # không cho xóa nếu còn suất chiếu
-        showtimes = (
-            showtime_controller
-            .get_showtime_data()
-        )
-
-        for st in showtimes:
-
-            if (
-                st.get_movie_id()
-                == movie_id
-            ):
-                return False
-
-        success = (
-            self._movie_list
-            .remove_movie(movie_id)
-        )
-
+    def delete_movie(self, movie_id: str) -> bool:
+        success = self._movie_list.remove_movie(movie_id)
         if success:
-
-            self._io_handler.save_movies(
-                self._movie_list
-            )
-
+            self._io_handler.save_movies(self._movie_list)
         return success
 
     # =================================================

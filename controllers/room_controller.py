@@ -61,7 +61,7 @@ class RoomController:
 
         room = node.get_data()
         
-        room.room_name = new_name = new_name.strip() if new_name else ""
+        room.set_room_name(new_name)
         
         self._io_handler.save_rooms(self._room_list)
         return True
@@ -69,18 +69,10 @@ class RoomController:
     # =================================================
     # DELETE ROOM: XÓA PHÒNG CHIẾU
     # =================================================
-    def delete_room(self, room_id: str, showtime_controller) -> bool:
-        showtimes = showtime_controller.get_showtime_data()
-
-        # Không cho phép xóa nếu phòng đang có suất chiếu
-        for st in showtimes:
-            if st.get_room_id() == room_id:
-                return False
-
+    def delete_room(self, room_id: str) -> bool:
         success = self._room_list.remove_room(room_id)
         if success:
             self._io_handler.save_rooms(self._room_list)
-
         return success
 
     # =================================================

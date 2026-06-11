@@ -1,7 +1,8 @@
 from models.entities import SeatStatus
 from controllers.movie_controller import MovieController
 from controllers.booking_controller import BookingController
-
+from controllers.showtime_controller import ShowtimeController 
+from controllers.room_controller import RoomController
 
 # =====================================================
 # ADMIN CONTROLLER
@@ -12,16 +13,15 @@ class AdminController:
     def __init__(
         self,
         movie_controller: MovieController,
-        booking_controller: BookingController
+        booking_controller: BookingController,
+        showtime_controller: ShowtimeController,
+        room_controller: RoomController
     ):
 
-        self._movie_controller = (
-            movie_controller
-        )
-
-        self._booking_controller = (
-            booking_controller
-        )
+        self._movie_controller = movie_controller
+        self._booking_controller = booking_controller
+        self._showtime_controller = showtime_controller
+        self._room_controller = room_controller
 
     # =================================================
     # TÍNH DOANH THU
@@ -35,7 +35,7 @@ class AdminController:
             ticket = current.get_data()
             status = str(ticket.get_status()).strip().upper()
             
-            if status in ["BOOKED", "2", "SEATSTATUS.BOOKED"]:
+            if status == "BOOKED":
                 revenue += ticket.get_price()
 
             current = current.get_next()
@@ -94,11 +94,7 @@ class AdminController:
                 ticket.get_status()
             ).strip().upper()
 
-            if status in [
-                "BOOKED",
-                "2",
-                "SEATSTATUS.BOOKED"
-            ]:
+            if status == "BOOKED":
 
                 movie_id = ticket.get_movie_id()
 
@@ -184,7 +180,31 @@ class AdminController:
         
         for t in all_tickets:
             status = str(t.get_status()).strip().upper()
-            if status in ["BOOKED", "2", "SEATSTATUS.BOOKED"]:
+            if status == "BOOKED":
                 active_tickets += [t]
                 
         return active_tickets
+    
+    # =================================================
+    # XÓA PHIM VÀ PHÒNG CHIẾU (TẦNG QUẢN LÝ TỔNG)
+    # =================================================
+    def admin_delete_movie(self, movie_id: str) -> bool:
+        with self._booking_controller._booking_lock:
+            showtimes = self._showtime_controller.get_showtime_data()
+            for st in showtimes:
+                if st.get_movie_id() == movie_id:
+                    return False # Từ chối xóa vì đang có lịch chiếu
+
+            success = self._movie_controller.delete_movie(movie_id)
+            
+            if success:
+                self._booking_controller.refresh_booking_data()
+                
+            return success
+    def admin_delete_room(self, room_id: str) -> bool:
+        showtimes = self._showtime_controller.get_showtime_data()
+        for st in showtimes:
+            if st.get_room_id() == room_id:
+                return False # Từ chối xóa
+
+        return self._room_controller.delete_room(room_id)
