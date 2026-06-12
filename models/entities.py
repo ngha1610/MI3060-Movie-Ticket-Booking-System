@@ -192,7 +192,7 @@ class MovieData:
 
         if not (1000 <= base_price <= 10000000):
             raise ValueError(
-                "Giá vé phải từ 1 đến 10.000.000 VNĐ"
+                "Giá vé phải từ 1.000 đến 10.000.000 VNĐ"
             )
 
         self._base_price = base_price
