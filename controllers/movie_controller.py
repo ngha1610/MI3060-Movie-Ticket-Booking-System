@@ -72,6 +72,14 @@ class MovieController:
 
         if node is None:
             return False
+        
+        existing_node = self.search_by_title(title)
+        if existing_node is not None:
+            existing_movie = existing_node.get_data()
+            # Chỉ báo lỗi nếu tìm thấy phim KHÁC trùng tên
+            # (không phải chính bộ phim đang được sửa)
+            if existing_movie.get_movie_id() != movie_id:
+                raise ValueError("Tên phim này đã tồn tại trong hệ thống!")
 
         movie = node.get_data()
 
