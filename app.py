@@ -356,7 +356,10 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                 
                 col1, col2 = st.columns(2)
                 new_duration = col1.number_input("Thời lượng (phút)", min_value=1, value=120)
-                new_price = col2.number_input("Giá vé cơ bản (VNĐ)", min_value=0, value=85000, step=5000)
+                new_price_text = col2.text_input(
+                    "Giá vé cơ bản (VNĐ)",
+                    value="85000"
+                )
                 
                 new_poster = st.text_input("Link ảnh Poster (URL)")
                 new_desc = st.text_area("Mô tả tóm tắt nội dung")
@@ -365,30 +368,44 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                     if not new_title.strip() or not new_genre.strip():
                         st.error("Vui lòng điền đầy đủ Tên phim và Thể loại!")
                     else:
-                        new_id = movie_controller.generate_movie_id()
-                        new_movie = MovieData(
-                            movie_id=new_id,
-                            title=new_title,
-                            genre=new_genre,
-                            duration=new_duration,
-                            description=new_desc,
-                            base_price=new_price,
-                            poster_path=new_poster
-                        )
-                        
                         try:
-                            # Chèn Node mới vào danh sách liên kết
-                            if movie_controller.add_movie(new_movie):
-                                st.toast(f"Đã thêm phim '{new_title}' thành công!")
-                                st.success(f"Thêm phim '{new_title}' thành công! Hệ thống đang tải lại...")
-                                time.sleep(1) 
-                                st.rerun()
+                            new_price = int(new_price_text)
+
+                            if not (1 <= new_price <= 10000000):
+                                st.error(
+                                    "Giá vé không hợp lệ! Phải nằm trong khoảng 1 - 10,000,000 VNĐ."
+                                )
+
                             else:
-                                st.error("Lỗi hệ thống khi lưu phim!")
-                        except ValueError as e:
-                            # Bắt đúng lỗi "Tên phim này đã tồn tại trong hệ thống!" từ MovieController ném lên
-                            st.error(f"Lỗi: {e}")
-                            
+                                new_id = movie_controller.generate_movie_id()
+                                new_movie = MovieData(
+                                    movie_id=new_id,
+                                    title=new_title,
+                                    genre=new_genre,
+                                    duration=new_duration,
+                                    description=new_desc,
+                                    base_price=new_price_text,
+                                    poster_path=new_poster
+                                )
+                        
+
+                                try:
+                                    # Chèn Node mới vào danh sách liên kết
+                                    if movie_controller.add_movie(new_movie):
+                                        st.toast(f"Đã thêm phim '{new_title}' thành công!")
+                                        st.success(f"Thêm phim '{new_title}' thành công! Hệ thống đang tải lại...")
+                                        time.sleep(1) 
+                                        st.rerun()
+                                    else:
+                                        st.error("Lỗi hệ thống khi lưu phim!")
+                                except ValueError as e:
+                                    # Bắt đúng lỗi "Tên phim này đã tồn tại trong hệ thống!" từ MovieController ném lên
+                                    st.error(f"Lỗi: {e}")
+                        except ValueError:
+                            st.error(
+                                "Giá vé phải là số nguyên từ 1 đến 10.000.000 VNĐ."
+                            )  
+
         # --- CẬP NHẬT PHIM ---
         elif manage_action == "Cập Nhật Phim":
             if not all_movies:
@@ -410,28 +427,40 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         
                         col1, col2 = st.columns(2)
                         upd_duration = col1.number_input("Thời lượng (phút)", min_value=1, value=selected_movie.get_duration())
-                        upd_price = col2.number_input("Giá vé (VNĐ)", min_value=0, value=int(selected_movie.get_base_price()), step=5000)
+                        current_price = max(1, min(int(selected_movie.get_base_price()), 10_000_000))
+
+                        upd_price = col2.number_input(
+                            "Giá vé (VNĐ)",
+                            min_value=1,
+                            max_value=10_000_000,
+                            value=current_price,
+                            step=5000
+                        )
                         
                         upd_poster = st.text_input("Link ảnh Poster", value=selected_movie.get_poster_path())
                         upd_desc = st.text_area("Mô tả", value=selected_movie.get_description())
                         
                         if st.form_submit_button("LƯU THAY ĐỔI", type="primary"):
-                            if movie_controller.update_movie(
-                                movie_id=selected_movie.get_movie_id(),
-                                title=upd_title,
-                                genre=upd_genre,
-                                duration=upd_duration,
-                                description=upd_desc,
-                                base_price=upd_price,
-                                poster_path=upd_poster
-                            ):
-                                st.toast("Đã cập nhật thông tin phim!")
-                                st.success("Bản ghi đã được cập nhật thành công! Đang tải lại...")
-                                time.sleep(1)
-                                st.rerun()
-                            else:
-                                st.error("Có lỗi xảy ra khi lưu.")
-
+                            try:
+                                if not (1 <= upd_price <= 10000000):
+                                    st.error("Giá vé không hợp lệ! Phải nằm trong khoảng 1 - 10,000,000 VNĐ.")
+                                elif movie_controller.update_movie(
+                                    movie_id=selected_movie.get_movie_id(),
+                                    title=upd_title,
+                                    genre=upd_genre,
+                                    duration=upd_duration,
+                                    description=upd_desc,
+                                    base_price=upd_price,
+                                    poster_path=upd_poster
+                                ):
+                                    st.toast("Đã cập nhật thông tin phim!")
+                                    st.success("Bản ghi đã được cập nhật thành công! Đang tải lại...")
+                                    time.sleep(1)
+                                    st.rerun()
+                                else:
+                                    st.error("Có lỗi xảy ra khi lưu.")
+                            except ValueError as e:
+                                st.error(f"Lỗi: {e}")
         # --- XÓA PHIM ---
         elif manage_action == "Xóa Phim":
             if not all_movies:
