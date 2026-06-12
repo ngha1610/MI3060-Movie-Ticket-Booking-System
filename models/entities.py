@@ -119,7 +119,7 @@ class MovieData:
         if duration <= 0:
             raise ValueError("Thời lượng phim không hợp lệ")
 
-        if not (1 <= base_price <= 10000000):
+        if not (1000 <= base_price <= 10000000):
             raise ValueError(
                 "Giá vé phải từ 1.000 đến 10.000.000 VNĐ"
             )
@@ -190,8 +190,12 @@ class MovieData:
 
     def set_base_price(self, base_price):
 
-        if base_price >= 0:
-            self._base_price = base_price
+        if not (1000 <= base_price <= 10000000):
+            raise ValueError(
+                "Giá vé phải từ 1 đến 10.000.000 VNĐ"
+            )
+
+        self._base_price = base_price
 
     def set_poster_path(self, poster_path):
         self._poster_path = poster_path
