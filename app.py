@@ -439,25 +439,35 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         
                         if st.form_submit_button("LƯU THAY ĐỔI", type="primary"):
                             try:
-                                if not (1000 <= int (upd_price_text) <= 10000000):
-                                    st.error("Giá vé không hợp lệ! Phải nằm trong khoảng 1,000 - 10,000,000 VNĐ.")
+                                upd_price = int(upd_price_text)
+
+                                if not (1000 <= upd_price <= 10000000):
+                                    st.error(
+                                        "Giá vé không hợp lệ! Phải nằm trong khoảng 1,000 - 10,000,000 VNĐ."
+                                    )
+
                                 elif movie_controller.update_movie(
                                     movie_id=selected_movie.get_movie_id(),
                                     title=upd_title,
                                     genre=upd_genre,
                                     duration=upd_duration,
                                     description=upd_desc,
-                                    base_price=int (upd_price_text),
+                                    base_price=upd_price,
                                     poster_path=upd_poster
                                 ):
                                     st.toast("Đã cập nhật thông tin phim!")
                                     st.success("Bản ghi đã được cập nhật thành công! Đang tải lại...")
                                     time.sleep(1)
                                     st.rerun()
+
                                 else:
                                     st.error("Có lỗi xảy ra khi lưu.")
-                            except ValueError as e:
-                                st.error(f"Lỗi: {e}")
+
+                            except ValueError:
+                                st.error(
+                                    "Giá vé phải là số nguyên hợp lệ."
+                                )
+
         # --- XÓA PHIM ---
         elif manage_action == "Xóa Phim":
             if not all_movies:
