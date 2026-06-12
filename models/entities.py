@@ -119,8 +119,10 @@ class MovieData:
         if duration <= 0:
             raise ValueError("Thời lượng phim không hợp lệ")
 
-        if base_price < 0:
-            raise ValueError("Giá vé không hợp lệ")
+        if not (1 <= base_price <= 10000000):
+            raise ValueError(
+                "Giá vé phải từ 1.000 đến 10.000.000 VNĐ"
+            )
 
         self._movie_id = movie_id
 
