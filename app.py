@@ -371,9 +371,9 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         try:
                             new_price = int(new_price_text)
 
-                            if not (1 <= new_price <= 10000000):
+                            if not (1000 <= new_price <= 10000000):
                                 st.error(
-                                    "Giá vé không hợp lệ! Phải nằm trong khoảng 1 - 10,000,000 VNĐ."
+                                    "Giá vé không hợp lệ! Phải nằm trong khoảng 1,000 - 10,000,000 VNĐ."
                                 )
 
                             else:
@@ -429,12 +429,9 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         upd_duration = col1.number_input("Thời lượng (phút)", min_value=1, value=selected_movie.get_duration())
                         current_price = max(1, min(int(selected_movie.get_base_price()), 10_000_000))
 
-                        upd_price = col2.number_input(
+                        upd_price_text = col2.text_input(
                             "Giá vé (VNĐ)",
-                            min_value=1,
-                            max_value=10_000_000,
-                            value=current_price,
-                            step=5000
+                            value=str(current_price)
                         )
                         
                         upd_poster = st.text_input("Link ảnh Poster", value=selected_movie.get_poster_path())
@@ -442,15 +439,15 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         
                         if st.form_submit_button("LƯU THAY ĐỔI", type="primary"):
                             try:
-                                if not (1 <= upd_price <= 10000000):
-                                    st.error("Giá vé không hợp lệ! Phải nằm trong khoảng 1 - 10,000,000 VNĐ.")
+                                if not (1000 <= int (upd_price_text) <= 10000000):
+                                    st.error("Giá vé không hợp lệ! Phải nằm trong khoảng 1,000 - 10,000,000 VNĐ.")
                                 elif movie_controller.update_movie(
                                     movie_id=selected_movie.get_movie_id(),
                                     title=upd_title,
                                     genre=upd_genre,
                                     duration=upd_duration,
                                     description=upd_desc,
-                                    base_price=upd_price,
+                                    base_price=int (upd_price_text),
                                     poster_path=upd_poster
                                 ):
                                     st.toast("Đã cập nhật thông tin phim!")
