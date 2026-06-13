@@ -8,3 +8,12 @@ MI3060 - 169307 - HUST
 * Lê Thị Lan Anh - 202419032
 * Phạm Thị Ngọc Ánh - 202419034
 * Nguyễn Như Nguyệt Hà - 202419052
+## 2. Kiến trúc hệ thống
+* Presentation Layer: file app.py, ui_components.py
+* Business Logic Layer: folder controllers
+* Data Structure Layer: folder data_structures
+* Data Model Layer: folder models
+* Bộ dữ liệu cơ sở: folder data
+* Mã nguồn và bộ dữ liệu kiểm thử: folder test
+* Class Diagram
+## 3. HDSD Hệ thống
