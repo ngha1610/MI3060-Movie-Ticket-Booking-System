@@ -14,6 +14,7 @@ MI3060 - 169307 - HUST
 * Data Structure Layer: folder data_structures
 * Data Model Layer: folder models
 * Bộ dữ liệu cơ sở: folder data
-* Mã nguồn và bộ dữ liệu kiểm thử: folder test
+* Mã nguồn kiểm thử tự động: 4 file benchmark.py
+* Bộ dữ liệu kiểm thử: folder DATA_TEST
 * Class Diagram
 ## 3. HDSD Hệ thống
