@@ -378,13 +378,14 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
 
                             else:
                                 new_id = movie_controller.generate_movie_id()
+                                price_int = int(new_price_text)
                                 new_movie = MovieData(
                                     movie_id=new_id,
                                     title=new_title,
                                     genre=new_genre,
                                     duration=new_duration,
                                     description=new_desc,
-                                    base_price=new_price_text,
+                                    base_price=price_int,
                                     poster_path=new_poster
                                 )
                         
@@ -438,35 +439,41 @@ if st.session_state.user_role == 'admin' and st.session_state.get('current_page'
                         upd_desc = st.text_area("Mô tả", value=selected_movie.get_description())
                         
                         if st.form_submit_button("LƯU THAY ĐỔI", type="primary"):
+
+                            # BƯỚC 1: Xử lý riêng việc chuyển đổi giá — nguồn ValueError thứ nhất
                             try:
                                 upd_price = int(upd_price_text)
-
-                                if not (1000 <= upd_price <= 10000000):
-                                    st.error(
-                                        "Giá vé không hợp lệ! Phải nằm trong khoảng 1,000 - 10,000,000 VNĐ."
-                                    )
-
-                                elif movie_controller.update_movie(
-                                    movie_id=selected_movie.get_movie_id(),
-                                    title=upd_title,
-                                    genre=upd_genre,
-                                    duration=upd_duration,
-                                    description=upd_desc,
-                                    base_price=upd_price,
-                                    poster_path=upd_poster
-                                ):
-                                    st.toast("Đã cập nhật thông tin phim!")
-                                    st.success("Bản ghi đã được cập nhật thành công! Đang tải lại...")
-                                    time.sleep(1)
-                                    st.rerun()
-
-                                else:
-                                    st.error("Có lỗi xảy ra khi lưu.")
-
                             except ValueError:
-                                st.error(
-                                    "Giá vé phải là số nguyên hợp lệ."
-                                )
+                                st.error("Giá vé phải là số nguyên hợp lệ.")
+                                upd_price = None
+
+                            # BƯỚC 2: Chỉ tiếp tục nếu giá hợp lệ
+                            if upd_price is not None:
+                                if not (1000 <= upd_price <= 10_000_000):
+                                    st.error("Giá vé không hợp lệ! Phải nằm trong khoảng 1,000 - 10,000,000 VNĐ.")
+                                else:
+                                    # BƯỚC 3: Xử lý riêng lỗi từ controller — nguồn ValueError thứ hai
+                                    try:
+                                        if movie_controller.update_movie(
+                                            movie_id=selected_movie.get_movie_id(),
+                                            title=upd_title,
+                                            genre=upd_genre,
+                                            duration=upd_duration,
+                                            description=upd_desc,
+                                            base_price=upd_price,
+                                            poster_path=upd_poster
+                                        ):
+                                            st.toast("Đã cập nhật thông tin phim!")
+                                            st.success("Bản ghi đã được cập nhật thành công! Đang tải lại...")
+                                            time.sleep(1)
+                                            st.rerun()
+                                        else:
+                                            st.error("Có lỗi xảy ra khi lưu.")
+                                    except ValueError as e:
+                                        # Bây giờ chỉ bắt đúng lỗi từ controller, hiển thị đúng nội dung
+                                        st.error(f"Lỗi: {e}")
+
+                                                    
 
         # --- XÓA PHIM ---
         elif manage_action == "Xóa Phim":
