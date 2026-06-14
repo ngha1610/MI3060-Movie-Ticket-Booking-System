@@ -17,9 +17,9 @@ MI3060 - 169307 - HUST
 * Mã nguồn kiểm thử tự động: 4 file benchmark.py
 * Bộ dữ liệu kiểm thử: folder DATA_TEST
 * Class Diagram
-# 3. Hướng dẫn sử dụng mã nguồn
+## 3. Hướng dẫn sử dụng mã nguồn
 
-## 3.1. Trải nghiệm trực tiếp (Live Demo)
+### 3.1. Trải nghiệm trực tiếp (Live Demo)
 
 Giảng viên có thể trải nghiệm toàn bộ giao diện và các chức năng của hệ thống thông qua phiên bản đã được triển khai trực tuyến mà không cần cài đặt mã nguồn.
 
@@ -27,7 +27,7 @@ Giảng viên có thể trải nghiệm toàn bộ giao diện và các chức n
 
 ---
 
-## 3.2. Yêu cầu môi trường
+### 3.2. Yêu cầu môi trường
 
 Để chạy chương trình trên máy tính cá nhân, cần chuẩn bị:
 
@@ -40,7 +40,7 @@ Hệ thống không sử dụng cơ sở dữ liệu SQL mà lưu trữ dữ li�
 
 ---
 
-## 3.3. Tải mã nguồn
+### 3.3. Tải mã nguồn
 
 Clone repository:
 
@@ -54,7 +54,7 @@ Sau đó mở thư mục dự án bằng Visual Studio Code hoặc IDE bất k�
 
 ---
 
-## 3.4. Cài đặt thư viện
+### 3.4. Cài đặt thư viện
 
 Nếu có file `requirements.txt`, cài đặt toàn bộ thư viện bằng:
 
@@ -76,7 +76,7 @@ pip install <tên_thư_viện>
 
 ---
 
-## 3.5. Khởi chạy chương trình
+### 3.5. Khởi chạy chương trình
 
 Tại thư mục gốc của dự án, chạy:
 
@@ -88,11 +88,11 @@ Sau khi thực thi, Streamlit sẽ tự động mở trình duyệt và hiển t
 
 ---
 
-## 3.6. Hướng dẫn sử dụng
+### 3.6. Hướng dẫn sử dụng
 
 Hệ thống hỗ trợ hai nhóm người dùng:
 
-### Đối với khách hàng
+#### Đối với khách hàng
 
 Người dùng có thể:
 
@@ -107,7 +107,7 @@ Người dùng có thể:
 * Thanh toán
 * Xem lịch sử đặt vé
 
-### Đối với quản trị viên
+#### Đối với quản trị viên
 
 Quản trị viên có thể:
 
@@ -125,7 +125,7 @@ Mọi thay đổi sẽ được lưu trực tiếp vào các tệp dữ liệu t
 
 ---
 
-## 3.7. Cấu trúc dự án
+### 3.7. Cấu trúc dự án
 
 Dự án được thiết kế theo mô hình phân lớp nhằm tách biệt giao diện, xử lý nghiệp vụ và dữ liệu.
 
@@ -147,7 +147,7 @@ MI3060-Movie-Ticket-Booking-System/
 └── README.md
 ```
 
-### `data_structures/`
+#### `data_structures/`
 
 Đây là phần trọng tâm của đồ án.
 
@@ -173,7 +173,7 @@ Giảng viên có thể kiểm tra trực tiếp các thao tác như:
 
 ---
 
-### `controllers/`
+#### `controllers/`
 
 Đây là lớp xử lý nghiệp vụ (Business Logic).
 
@@ -189,7 +189,7 @@ Các module trong thư mục này thực hiện:
 
 ---
 
-### `models/`
+#### `models/`
 
 Định nghĩa các lớp đối tượng theo hướng đối tượng (OOP).
 
@@ -207,7 +207,7 @@ Các lớp này mô tả dữ liệu và thuộc tính của từng thực thể
 
 ---
 
-### `app.py`
+#### `app.py`
 
 Là điểm khởi chạy của hệ thống.
 
@@ -220,7 +220,7 @@ Chịu trách nhiệm:
 
 ---
 
-### `ui_components.py`
+#### `ui_components.py`
 
 Chứa các thành phần giao diện dùng chung.
 
@@ -232,7 +232,7 @@ Ví dụ:
 
 ---
 
-### `data/`
+#### `data/`
 
 Lưu trữ toàn bộ dữ liệu của hệ thống dưới dạng CSV.
 
@@ -248,13 +248,13 @@ Khi chương trình chạy, dữ liệu sẽ được nạp từ các file này 
 
 ---
 
-### `DATA_TEST/`
+#### `DATA_TEST/`
 
 Chứa bộ dữ liệu phục vụ kiểm thử và đánh giá chương trình với nhiều trường hợp dữ liệu khác nhau.
 
 ---
 
-### `Class Diagram/`
+#### `Class Diagram/`
 
 Chứa sơ đồ lớp mô tả kiến trúc hướng đối tượng của toàn bộ hệ thống.
 
@@ -262,13 +262,13 @@ Giảng viên có thể tham khảo để hiểu nhanh mối quan hệ giữa c�
 
 ---
 
-## 3.8. Benchmark đánh giá thuật toán
+### 3.8. Benchmark đánh giá thuật toán
 
 Để đánh giá hiệu năng của các cấu trúc dữ liệu và thuật toán, nhóm xây dựng bốn chương trình benchmark độc lập.
 
 Các chương trình này chạy bằng Python và không phụ thuộc giao diện Streamlit.
 
-### Benchmark đăng ký
+#### Benchmark đăng ký
 
 ```bash
 python benchmark_1register.py
@@ -278,7 +278,7 @@ python benchmark_1register.py
 
 ---
 
-### Benchmark đăng nhập
+#### Benchmark đăng nhập
 
 ```bash
 python benchmark_2login.py
@@ -288,7 +288,7 @@ python benchmark_2login.py
 
 ---
 
-### Benchmark quản trị viên
+#### Benchmark quản trị viên
 
 ```bash
 python benchmark_admin.py
@@ -303,7 +303,7 @@ python benchmark_admin.py
 
 ---
 
-### Benchmark khách hàng
+#### Benchmark khách hàng
 
 ```bash
 python benchmark_customer.py
@@ -318,7 +318,7 @@ python benchmark_customer.py
 
 ---
 
-## 3.9. Một số lưu ý
+### 3.9. Một số lưu ý
 
 * Không thay đổi cấu trúc thư mục của dự án.
 * Không đổi tên các file CSV trong thư mục `data/`.
@@ -328,7 +328,7 @@ python benchmark_customer.py
 
 ---
 
-## 3.10. Hướng dẫn chấm điểm mã nguồn
+### 3.10. Hướng dẫn chấm điểm mã nguồn
 
 Để thuận tiện trong quá trình đánh giá, nhóm đề xuất cho cô thứ tự đọc mã nguồn như sau:
 
