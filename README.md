@@ -328,9 +328,9 @@ python benchmark_customer.py
 
 ---
 
-### 3.10. Hướng dẫn chấm điểm mã nguồn
+### 3.10. Đề xuất trình tự
 
-Để thuận tiện trong quá trình đánh giá, nhóm đề xuất cho cô thứ tự đọc mã nguồn như sau:
+Để thuận tiện trong quá trình đánh giá, nhóm đề xuất trình tự đọc mã nguồn như sau:
 
 1. Đọc **README.md** để nắm tổng quan dự án.
 2. Tham khảo **Class Diagram/** để hiểu kiến trúc hướng đối tượng.
