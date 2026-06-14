@@ -23,7 +23,7 @@ MI3060 - 169307 - HUST
 
 Giảng viên có thể trải nghiệm toàn bộ giao diện và các chức năng của hệ thống thông qua phiên bản đã được triển khai trực tuyến mà không cần cài đặt mã nguồn.
 
-> **Link Demo:** *(Cập nhật đường dẫn deploy của nhóm tại đây)*
+> **Link Demo:** *(https://sunnyx-cinema.streamlit.app/?utm_medium=social)*
 
 ---
 
